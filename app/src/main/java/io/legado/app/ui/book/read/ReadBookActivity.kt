@@ -1291,19 +1291,13 @@ class ReadBookActivity : BaseReadBookActivity(),
             }
 
             R.id.menu_replace -> {
-                val scopes = arrayListOf<String>()
-                ReadBook.book?.name?.let {
-                    scopes.add(it)
-                }
-                ReadBook.bookSource?.bookSourceUrl?.let {
-                    scopes.add(it)
-                }
                 val text = selectedText.lineSequence().joinToString("\n") { it.trim() }
                 replaceActivity.launch(
                     ReplaceEditActivity.startIntent(
                         this,
                         pattern = text,
-                        scope = scopes.joinToString(";")
+                        bookName = ReadBook.book?.name,
+                        bookSource = ReadBook.bookSource?.bookSourceUrl
                     )
                 )
                 return true

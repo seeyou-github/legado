@@ -10,6 +10,7 @@ import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
@@ -51,13 +52,17 @@ class ReplaceEditActivity :
             id: Long = -1,
             pattern: String? = null,
             isRegex: Boolean = false,
-            scope: String? = null
+            scope: String? = null,
+            bookName: String? = null,
+            bookSource: String? = null
         ): Intent {
             val intent = Intent(context, ReplaceEditActivity::class.java)
             intent.putExtra("id", id)
             intent.putExtra("pattern", pattern)
             intent.putExtra("isRegex", isRegex)
             intent.putExtra("scope", scope)
+            intent.putExtra("bookName", bookName)
+            intent.putExtra("bookSource", bookSource)
             return intent
         }
 
@@ -72,6 +77,9 @@ class ReplaceEditActivity :
 
     private var previewJob: Job? = null
     private var updatingView = false
+    private var updatingScopeChecks = false
+    private var curBookName: String? = null
+    private var curBookSource: String? = null
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         softKeyboardTool.attachToWindow(window)
@@ -151,6 +159,21 @@ class ReplaceEditActivity :
         binding.ivGroupDropdown.setOnClickListener {
             showGroupSelectMenu()
         }
+        curBookName = intent.getStringExtra("bookName")
+        curBookSource = intent.getStringExtra("bookSource")
+        if (curBookName == null && curBookSource == null) {
+            binding.flexCurScope.isVisible = false
+        } else {
+            binding.cbCurBook.isVisible = curBookName != null
+            binding.cbCurSource.isVisible = curBookSource != null
+            binding.cbCurBook.setOnCheckedChangeListener { _, _ -> onCurScopeCheckChanged() }
+            binding.cbCurSource.setOnCheckedChangeListener { _, _ -> onCurScopeCheckChanged() }
+            binding.etScope.doAfterTextChanged {
+                if (!updatingView && !updatingScopeChecks) {
+                    syncCurScopeChecks()
+                }
+            }
+        }
         binding.etPreviewOutput.apply {
             keyListener = null
             showSoftInputOnFocus = false
@@ -203,6 +226,61 @@ class ReplaceEditActivity :
         }
     }
 
+    /**
+     * 替换范围与"替换当前小说/书源"复选框双向同步：
+     * 复选框勾选时在替换范围填入对应值(书名或书源URL)，取消勾选则移除该值。
+     */
+    private fun scopeTokens(): List<String> {
+        return binding.etScope.text?.toString()
+            ?.split(";")
+            ?.map(String::trim)
+            ?.filter(String::isNotBlank)
+            ?: emptyList()
+    }
+
+    private fun syncCurScopeChecks() {
+        updatingScopeChecks = true
+        try {
+            val tokens = scopeTokens()
+            curBookName?.let { binding.cbCurBook.isChecked = it in tokens }
+            curBookSource?.let { binding.cbCurSource.isChecked = it in tokens }
+        } finally {
+            updatingScopeChecks = false
+        }
+    }
+
+    private fun onCurScopeCheckChanged() {
+        if (updatingView || updatingScopeChecks) {
+            return
+        }
+        val tokens = scopeTokens().toMutableList()
+        curBookName?.let { name ->
+            if (binding.cbCurBook.isChecked) {
+                if (!tokens.contains(name)) {
+                    tokens.add(name)
+                }
+            } else {
+                tokens.remove(name)
+            }
+        }
+        curBookSource?.let { source ->
+            if (binding.cbCurSource.isChecked) {
+                if (!tokens.contains(source)) {
+                    tokens.add(source)
+                }
+            } else {
+                tokens.remove(source)
+            }
+        }
+        val newScope = if (tokens.isEmpty()) {
+            ""
+        } else {
+            tokens.joinToString(";") + ";"
+        }
+        binding.etScope.setText(newScope)
+        binding.etScope.setSelection(newScope.length)
+    }
+
     private fun upReplaceView(replaceRule: ReplaceRule) = binding.run {
         updatingView = true
         try {
@@ -215,6 +293,7 @@ class ReplaceEditActivity :
             cbScopeSource.isChecked = replaceRule.scopeSource
             cbScopeContent.isChecked = replaceRule.scopeContent
             etScope.setText(replaceRule.scope)
+            syncCurScopeChecks()
             etExcludeScope.setText(replaceRule.excludeScope)
             etTimeout.setText(replaceRule.timeoutMillisecond.toString())
             val editingRuleId = viewModel.replaceRule?.id ?: replaceRule.id
