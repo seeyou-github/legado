@@ -49,17 +49,15 @@ android {
     }
 
     signingConfigs {
-        if (project.hasProperty("RELEASE_STORE_FILE")) {
-            myConfig {
-                storeFile file(RELEASE_STORE_FILE)
-                storePassword RELEASE_STORE_PASSWORD
-                keyAlias RELEASE_KEY_ALIAS
-                keyPassword RELEASE_KEY_PASSWORD
-                enableV1Signing = true
-                enableV2Signing = true
-                enableV3Signing = true
-                enableV4Signing = true
-            }
+        myConfig {
+            storeFile file('TestKey.jks')
+            storePassword '123321'
+            keyAlias 'Test'
+            keyPassword '123321'
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
     defaultConfig {
@@ -109,9 +107,7 @@ android {
     }
     buildTypes {
         release {
-            if (project.hasProperty("RELEASE_STORE_FILE")) {
-                signingConfig = signingConfigs.myConfig
-            }
+            signingConfig = signingConfigs.myConfig
             applicationIdSuffix '.release'
             if (getApplicationIdSuffix() == '.releaseA') {
                 manifestPlaceholders.put("app_name", "@string/app_name_a")
@@ -124,9 +120,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'cronet-proguard-rules.pro'
         }
         debug {
-            if (project.hasProperty("RELEASE_STORE_FILE")) {
-                signingConfig = signingConfigs.myConfig
-            }
+            signingConfig = signingConfigs.myConfig
             manifestPlaceholders.put("app_name", "@string/app_name")
 
             applicationIdSuffix '.debug'
