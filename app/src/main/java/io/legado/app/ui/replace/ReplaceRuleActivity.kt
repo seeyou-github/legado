@@ -10,8 +10,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
@@ -128,6 +130,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         initSearchView()
         initSelectActionView()
         initTabViewMode()
+        initFabScroll()
         observeReplaceRuleData()
         observeGroupData()
     }
@@ -157,6 +160,32 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
         // Note: need judge selection first, so add ItemTouchHelper after it.
         ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
+    }
+
+    /**
+     * 悬浮滚动按钮：列表内容超过一屏可滚动时显示，回到顶部/跳到底部
+     */
+    private fun initFabScroll() {
+        binding.ivFabToTop.setOnClickListener {
+            binding.recyclerView.smoothScrollToPosition(0)
+        }
+        binding.ivFabToBottom.setOnClickListener {
+            val adapter = binding.recyclerView.adapter ?: return@setOnClickListener
+            binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1)
+        }
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                upFabScrollButtons()
+            }
+        })
+        binding.recyclerView.post {
+            upFabScrollButtons()
+        }
+    }
+
+    private fun upFabScrollButtons() {
+        binding.ivFabToTop.isVisible = binding.recyclerView.canScrollVertically(-1)
+        binding.ivFabToBottom.isVisible = binding.recyclerView.canScrollVertically(1)
     }
 
     private fun initTabViewMode() {
@@ -433,6 +462,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
             adapter.selection.size,
             adapter.getItems().size
         )
+        upFabScrollButtons()
     }
 
     override fun update(vararg rule: ReplaceRule) {

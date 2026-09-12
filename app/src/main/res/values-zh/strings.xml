@@ -1462,6 +1462,8 @@
     <string name="bookshelf_px_5">按作者</string>
     <string name="effective_replaces">起效的替换</string>
     <string name="temp_disable_replace">临时关闭本章替换净化</string>
+    <string name="scroll_to_top">回到顶部</string>
+    <string name="scroll_to_bottom">跳到底部</string>
     <string name="temp_disable_replace_off">已临时关闭本章替换净化，下一章或重新进入本章后恢复</string>
     <string name="temp_disable_replace_on">已恢复本章替换净化</string>
     <string name="export_book">导出书籍</string>

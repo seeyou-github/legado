@@ -53,6 +53,41 @@
             android:layout_height="match_parent"
             tools:ignore="SpeakableTextPresentCheck" />
 
+        <LinearLayout
+            android:id="@+id/fab_scroll_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_fab_to_top"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="24dp"
+                android:alpha="0.7"
+                android:background="@drawable/bg_fab_circle"
+                android:contentDescription="@string/scroll_to_top"
+                android:padding="6dp"
+                android:src="@drawable/ic_arrow_drop_up"
+                android:tint="@color/primaryText"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_fab_to_bottom"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:alpha="0.7"
+                android:background="@drawable/bg_fab_circle"
+                android:contentDescription="@string/scroll_to_bottom"
+                android:padding="6dp"
+                android:src="@drawable/ic_arrow_drop_down"
+                android:tint="@color/primaryText"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
     </FrameLayout>
 
     <io.legado.app.ui.widget.SelectActionBar
