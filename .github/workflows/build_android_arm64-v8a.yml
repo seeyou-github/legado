@@ -1,0 +1,105 @@
+name: Build Android arm64-v8a
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-ver.outputs.version }}
+      versionL: ${{ steps.set-ver.outputs.versionL }}
+    steps:
+      - id: set-ver
+        run: |
+          echo "version=$(date -d '8 hour' -u +3.%y.%m%d%H)" >> "$GITHUB_OUTPUT"
+          echo "versionL=$(date -d '8 hour' -u +3.%y.%m%d%H%M)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    env:
+      LEGADO_DIR: ${{ github.workspace }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      VERSIONL: ${{ needs.prepare.outputs.versionL }}
+    steps:
+      - name: Checkout patch project
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Patch build configuration
+        working-directory: ${{ env.LEGADO_DIR }}
+        run: |
+          sed -i 's/^\(\s*\)alias libs\.plugins\.google\.services/\1\/\/ alias libs.plugins.google.services/' app/build.gradle
+          perl -0pi -e 's/\n\s*\/\/firebase,[^\n]*\n\s*implementation platform\(libs\.firebase\.bom\)\n\s*implementation libs\.firebase\.analytics\n\s*implementation libs\.firebase\.perf\n/\n/g' app/build.gradle
+          rm -f app/google-services.json
+          sed -i '/testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"/a\        ndk { abiFilters "arm64-v8a" }' app/build.gradle
+          sed -i "/^def version = /c\def version = \"$VERSION\"" app/build.gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK
+        working-directory: ${{ env.LEGADO_DIR }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleAppRelease --build-cache --parallel --warning-mode all
+
+      - name: Collect APK and mapping
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/apk" "$GITHUB_WORKSPACE/mapping"
+          mapfile -t apk_files < <(find "$LEGADO_DIR/app/build/outputs/apk" -type f -name "*.apk" | sort)
+          if [ "${#apk_files[@]}" -eq 0 ]; then
+            echo "No APK files found under app/build/outputs/apk"
+            find "$LEGADO_DIR/app/build/outputs" -maxdepth 5 -type f | sort
+            exit 1
+          fi
+          index=1
+          for file in "${apk_files[@]}"; do
+            if [ "${#apk_files[@]}" -eq 1 ]; then
+              mv "$file" "$GITHUB_WORKSPACE/apk/legado_app_${VERSIONL}_arm64-v8a.apk"
+            else
+              mv "$file" "$GITHUB_WORKSPACE/apk/legado_app_${VERSIONL}_arm64-v8a_${index}.apk"
+              index=$((index + 1))
+            fi
+          done
+          mapfile -t mapping_files < <(find "$LEGADO_DIR/app/build/outputs/mapping" -type f -name "mapping.txt" 2>/dev/null | sort)
+          index=1
+          for file in "${mapping_files[@]}"; do
+            if [ "${#mapping_files[@]}" -eq 1 ]; then
+              cp "$file" "$GITHUB_WORKSPACE/mapping/mapping.txt"
+            else
+              cp "$file" "$GITHUB_WORKSPACE/mapping/mapping_${index}.txt"
+              index=$((index + 1))
+            fi
+          done
+          mapfile -t missing_rules_files < <(find "$LEGADO_DIR/app/build/outputs/mapping" -type f -name "missing_rules.txt" 2>/dev/null | sort)
+          index=1
+          for file in "${missing_rules_files[@]}"; do
+            if [ "${#missing_rules_files[@]}" -eq 1 ]; then
+              cp "$file" "$GITHUB_WORKSPACE/mapping/missing_rules.txt"
+            else
+              cp "$file" "$GITHUB_WORKSPACE/mapping/missing_rules_${index}.txt"
+              index=$((index + 1))
+            fi
+          done
+
+      - name: Check build output
+        run: |
+          find "$GITHUB_WORKSPACE/apk" -type f -name "*.apk" | grep -q .
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: legado.app.release.arm64-v8a
+          path: ${{ github.workspace }}/apk/*.apk
+          retention-days: 3
