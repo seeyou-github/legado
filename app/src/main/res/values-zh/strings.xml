@@ -472,6 +472,9 @@
     <string name="ps_default_read">默认打开书架</string>
     <string name="pt_default_read">自动跳转最近阅读</string>
     <string name="replace_scope">替换范围，选填书名或者书源 URL</string>
+    <string name="replace_preset_line_start">替换当前选定文字开头的段落</string>
+    <string name="replace_preset_line_contains">替换选中文字所在段落</string>
+    <string name="replace_preset_none">取消预设</string>
     <string name="replace_scope_cur_book">替换当前小说</string>
     <string name="replace_scope_cur_source">替换当前书源</string>
     <string name="replace_view_list">列表</string>

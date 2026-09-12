@@ -84,6 +84,40 @@
                     tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
             </io.legado.app.ui.widget.text.TextInputLayout>
 
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/flex_pattern_preset"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"
+                app:alignItems="center"
+                app:flexWrap="wrap"
+                app:justifyContent="flex_start">
+
+                <io.legado.app.lib.theme.view.ThemeRadioButton
+                    android:id="@+id/rb_preset_line_start"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/replace_preset_line_start"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+                <io.legado.app.lib.theme.view.ThemeRadioButton
+                    android:id="@+id/rb_preset_line_contains"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/replace_preset_line_contains"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+                <io.legado.app.lib.theme.view.ThemeRadioButton
+                    android:id="@+id/rb_preset_none"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/replace_preset_none"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+            </com.google.android.flexbox.FlexboxLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

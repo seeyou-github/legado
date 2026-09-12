@@ -80,6 +80,7 @@ class ReplaceEditActivity :
     private var updatingScopeChecks = false
     private var curBookName: String? = null
     private var curBookSource: String? = null
+    private var selectedPattern: String? = null
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         softKeyboardTool.attachToWindow(window)
@@ -197,10 +198,30 @@ class ReplaceEditActivity :
             schedulePreview()
         }
         binding.etName.doAfterTextChanged { schedulePreview() }
+        selectedPattern = intent.getStringExtra("pattern")?.takeIf { it.isNotBlank() }
+        binding.rbPresetLineStart.setOnClickListener {
+            selectedPattern?.let {
+                binding.etReplaceRule.setText("\\s$it.*")
+            }
+        }
+        binding.rbPresetLineContains.setOnClickListener {
+            selectedPattern?.let {
+                binding.etReplaceRule.setText(".*$it.*")
+            }
+        }
+        binding.rbPresetNone.setOnClickListener {
+            selectedPattern?.let {
+                binding.etReplaceRule.setText(it)
+            }
+        }
+        binding.cbUseRegex.setOnCheckedChangeListener { _, _ ->
+            upPatternPresetVisibility()
+            schedulePreview()
+        }
+        upPatternPresetVisibility()
         binding.etReplaceRule.doAfterTextChanged { schedulePreview() }
         binding.etReplaceTo.doAfterTextChanged { schedulePreview() }
         binding.etTimeout.doAfterTextChanged { schedulePreview() }
-        binding.cbUseRegex.setOnCheckedChangeListener { _, _ -> schedulePreview() }
         binding.root.setOnApplyWindowInsetsListenerCompat { _, windowInsets ->
             softKeyboardTool.initialPadding = windowInsets.imeHeight
             windowInsets
@@ -224,6 +245,11 @@ class ReplaceEditActivity :
                 binding.etGroup.setSelection(group.length)
             }
         }
+    }
+
+    private fun upPatternPresetVisibility() {
+        binding.flexPatternPreset.isVisible =
+            binding.cbUseRegex.isChecked && selectedPattern != null
     }
 
     /**

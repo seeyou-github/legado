@@ -475,6 +475,9 @@
     <string name="ps_default_read">Use Bookshelf as start page</string>
     <string name="pt_default_read">Auto jump to Recent list</string>
     <string name="replace_scope">Replacement object. Book name or source url is available</string>
+    <string name="replace_preset_line_start">Paragraph starting with selected text</string>
+    <string name="replace_preset_line_contains">Paragraph containing selected text</string>
+    <string name="replace_preset_none">No preset</string>
     <string name="replace_scope_cur_book">Replace current book</string>
     <string name="replace_scope_cur_source">Replace current book source</string>
     <string name="replace_view_list">List</string>
