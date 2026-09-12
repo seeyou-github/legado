@@ -15,6 +15,33 @@
         app:contentLayout="@layout/view_search"
         app:title="@string/replace_purify" />
 
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_view_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:tabGravity="fill"
+        app:tabIndicatorFullWidth="false"
+        app:tabMode="fixed"
+        app:tabRippleColor="@android:color/transparent">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/replace_view_list" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/replace_view_group" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/replace_view_scope" />
+
+    </com.google.android.material.tabs.TabLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

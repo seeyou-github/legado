@@ -12,6 +12,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.tabs.TabLayout
 import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.AppLog
@@ -27,6 +28,7 @@ import io.legado.app.help.config.ReplacePreviewConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.dialogs.sourceSharePassphraseButton
+import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.ui.association.ImportReplaceRuleDialog
@@ -77,6 +79,11 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     private var groupMenu: SubMenu? = null
     private var replaceRuleFlowJob: Job? = null
     private var dataInit = false
+    private val itemTouchCallback by lazy {
+        ItemTouchCallback(adapter).apply {
+            isCanDrag = true
+        }
+    }
     private val qrCodeResult = registerForActivityResult(QrCodeResult()) {
         it ?: return@registerForActivityResult
         showDialogFragment(ImportReplaceRuleDialog(it))
@@ -120,6 +127,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         initRecyclerView()
         initSearchView()
         initSelectActionView()
+        initTabViewMode()
         observeReplaceRuleData()
         observeGroupData()
     }
@@ -141,8 +149,6 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
         binding.recyclerView.addItemDecoration(VerticalDivider(this))
-        val itemTouchCallback = ItemTouchCallback(adapter)
-        itemTouchCallback.isCanDrag = true
         val dragSelectTouchHelper: DragSelectTouchHelper =
             DragSelectTouchHelper(adapter.dragSelectCallback).setSlideArea(16, 50)
         dragSelectTouchHelper.attachToRecyclerView(binding.recyclerView)
@@ -151,6 +157,27 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
         // Note: need judge selection first, so add ItemTouchHelper after it.
         ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
+    }
+
+    private fun initTabViewMode() {
+        binding.tabViewMode.setSelectedTabIndicatorColor(accentColor)
+        binding.tabViewMode.setTabTextColors(primaryTextColor, accentColor)
+        binding.tabViewMode.isTabIndicatorFullWidth = false
+        binding.tabViewMode.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                val mode = when (tab.position) {
+                    1 -> ReplaceRuleAdapter.ViewMode.GROUP
+                    2 -> ReplaceRuleAdapter.ViewMode.SCOPE
+                    else -> ReplaceRuleAdapter.ViewMode.LIST
+                }
+                itemTouchCallback.isCanDrag = mode == ReplaceRuleAdapter.ViewMode.LIST
+                adapter.setViewMode(mode)
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
     }
 
     private fun initSearchView() {
@@ -220,7 +247,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 if (dataInit) {
                     setResult(RESULT_OK)
                 }
-                adapter.setItems(it, adapter.diffItemCallBack)
+                adapter.setRules(it)
                 dataInit = true
                 delay(100)
             }
@@ -387,6 +414,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     }
 
     override fun onQueryTextChange(newText: String?): Boolean {
+        adapter.setSearchActive(!newText.isNullOrBlank())
         observeReplaceRuleData(newText)
         return false
     }
@@ -403,7 +431,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     override fun upCountView() {
         binding.selectActionBar.upCountView(
             adapter.selection.size,
-            adapter.itemCount
+            adapter.getItems().size
         )
     }
 
@@ -441,5 +469,16 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     override fun upOrder() {
         setResult(RESULT_OK)
         viewModel.upOrder()
+    }
+
+    override fun deleteSection(title: String, rules: List<ReplaceRule>) {
+        alert(R.string.draw) {
+            setMessage(getString(R.string.sure_del) + "\n" + title)
+            noButton()
+            yesButton {
+                setResult(RESULT_OK)
+                viewModel.delSelection(rules)
+            }
+        }
     }
 }
