@@ -47,6 +47,11 @@ enum class ReaderMenuItem(
         intArrayOf(R.id.menu_effective_replaces),
         R.string.effective_replaces
     ),
+    TempDisableReplace(
+        "tempDisableReplace",
+        intArrayOf(R.id.menu_temp_disable_replace),
+        R.string.temp_disable_replace
+    ),
     Log("log", intArrayOf(R.id.menu_log), R.string.log),
     Help("help", intArrayOf(R.id.menu_help), R.string.help);
 

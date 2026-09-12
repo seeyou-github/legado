@@ -1469,6 +1469,9 @@
     <string name="bookshelf_px_4">Comprehensive</string>
     <string name="bookshelf_px_5">Sort by author</string>
     <string name="effective_replaces">Effective replacement</string>
+    <string name="temp_disable_replace">Temporarily disable replacements for this chapter</string>
+    <string name="temp_disable_replace_off">Replacements disabled for this chapter; they will resume on next chapter or re-entry</string>
+    <string name="temp_disable_replace_on">Replacements restored for this chapter</string>
     <string name="export_book">Export Book</string>
     <string name="export_book_notification_content">Exporting (%1$s), with %2$d to be exported.</string>
     <string name="export_md">Export(MD)</string>

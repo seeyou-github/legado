@@ -1461,6 +1461,9 @@
     <string name="bookshelf_px_4">综合排序</string>
     <string name="bookshelf_px_5">按作者</string>
     <string name="effective_replaces">起效的替换</string>
+    <string name="temp_disable_replace">临时关闭本章替换净化</string>
+    <string name="temp_disable_replace_off">已临时关闭本章替换净化，下一章或重新进入本章后恢复</string>
+    <string name="temp_disable_replace_on">已恢复本章替换净化</string>
     <string name="export_book">导出书籍</string>
     <string name="export_book_notification_content">正在导出(%1$s),还有%2$d本待导出</string>
     <string name="export_md">导出(MD)</string>

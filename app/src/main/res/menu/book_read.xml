@@ -154,6 +154,13 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_temp_disable_replace"
+        android:checkable="true"
+        android:checked="false"
+        android:title="@string/temp_disable_replace"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_log"
         android:title="@string/log"
         app:showAsAction="never" />

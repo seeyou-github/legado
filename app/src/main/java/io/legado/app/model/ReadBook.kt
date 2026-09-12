@@ -137,6 +137,20 @@ object ReadBook : CoroutineScope by MainScope() {
     var simulatedChapterSize = 0
     var durChapterIndex = 0
     var durChapterPos = 0
+
+    /** 临时关闭替换净化的章节索引，换章或重新进入本章后自动恢复替换 */
+    var tempReplaceDisabledChapterIndex: Int? = null
+
+    /**
+     * 丢弃被临时关闭替换净化的章节的已渲染缓存，
+     * 避免翻回该章或重新进入阅读时复用未替换的旧内容
+     */
+    fun dropTempReplaceDisabledChapters(disabledIndex: Int) {
+        if (prevTextChapter?.chapter?.index == disabledIndex) prevTextChapter = null
+        if (curTextChapter?.chapter?.index == disabledIndex) curTextChapter = null
+        if (nextTextChapter?.chapter?.index == disabledIndex) nextTextChapter = null
+    }
+
     var isLocalBook = true
     var chapterChanged = false
     var prevTextChapter: TextChapter? = null
@@ -550,6 +564,7 @@ object ReadBook : CoroutineScope by MainScope() {
         pendingHighlightJump = null
         pendingHighlightAnchor = null
         invalidateHighlightRuleMatches()
+        tempReplaceDisabledChapterIndex = null
         prevTextChapter = null
         curTextChapter = null
         nextTextChapter = null
@@ -706,6 +721,10 @@ object ReadBook : CoroutineScope by MainScope() {
             prevTextChapter = curTextChapter
             curTextChapter = nextTextChapter
             nextTextChapter = null
+            tempReplaceDisabledChapterIndex?.let { disabledIndex ->
+                tempReplaceDisabledChapterIndex = null
+                dropTempReplaceDisabledChapters(disabledIndex)
+            }
             if (curTextChapter == null) {
                 AppLog.putDebug("moveToNextChapter-章节未加载,开始加载")
                 if (upContentInPlace) callBack?.upContent()
@@ -748,6 +767,10 @@ object ReadBook : CoroutineScope by MainScope() {
             prevTextChapter = curTextChapter
             curTextChapter = nextTextChapter
             nextTextChapter = null
+            tempReplaceDisabledChapterIndex?.let { disabledIndex ->
+                tempReplaceDisabledChapterIndex = null
+                dropTempReplaceDisabledChapters(disabledIndex)
+            }
             if (curTextChapter == null) {
                 AppLog.putDebug("moveToNextChapter-章节未加载,开始加载")
                 if (upContentInPlace) callBack?.upContentAwait()
@@ -786,6 +809,10 @@ object ReadBook : CoroutineScope by MainScope() {
             nextTextChapter = curTextChapter
             curTextChapter = prevTextChapter
             prevTextChapter = null
+            tempReplaceDisabledChapterIndex?.let { disabledIndex ->
+                tempReplaceDisabledChapterIndex = null
+                dropTempReplaceDisabledChapters(disabledIndex)
+            }
             if (curTextChapter == null) {
                 if (upContentInPlace) callBack?.upContent()
                 loadContent(durChapterIndex, upContent, resetPageOffset = false)
@@ -1270,7 +1297,12 @@ object ReadBook : CoroutineScope by MainScope() {
             val contentProcessor = ContentProcessor.get(book.name, book.origin)
             val manualRules = manualReplaceRules(book)
             val titleRules = manualRules?.title ?: contentProcessor.getTitleReplaceRules()
-            val replaceEnabled = manualRules?.enabled ?: book.getUseReplaceRule()
+            val chapterReplaceTempDisabled = chapter.index == tempReplaceDisabledChapterIndex
+            val replaceEnabled = if (chapterReplaceTempDisabled) {
+                false
+            } else {
+                manualRules?.enabled ?: book.getUseReplaceRule()
+            }
             val displayTitle = chapter.getDisplayTitle(
                 titleRules,
                 replaceEnabled,
@@ -1281,7 +1313,11 @@ object ReadBook : CoroutineScope by MainScope() {
                 chapter,
                 content,
                 includeTitle = false,
-                replaceEnabledOverride = manualRules?.enabled,
+                replaceEnabledOverride = if (chapterReplaceTempDisabled) {
+                    false
+                } else {
+                    manualRules?.enabled
+                },
                 titleReplaceRulesOverride = manualRules?.title,
                 contentReplaceRulesOverride = manualRules?.content,
             )
@@ -1404,7 +1440,12 @@ object ReadBook : CoroutineScope by MainScope() {
             val contentProcessor = ContentProcessor.get(book.name, book.origin)
             val manualRules = manualReplaceRules(book)
             val titleRules = manualRules?.title ?: contentProcessor.getTitleReplaceRules()
-            val replaceEnabled = manualRules?.enabled ?: book.getUseReplaceRule()
+            val chapterReplaceTempDisabled = chapter.index == tempReplaceDisabledChapterIndex
+            val replaceEnabled = if (chapterReplaceTempDisabled) {
+                false
+            } else {
+                manualRules?.enabled ?: book.getUseReplaceRule()
+            }
             val displayTitle = chapter.getDisplayTitle(
                 titleRules,
                 replaceEnabled,
@@ -1415,7 +1456,11 @@ object ReadBook : CoroutineScope by MainScope() {
                 chapter,
                 content,
                 includeTitle = false,
-                replaceEnabledOverride = manualRules?.enabled,
+                replaceEnabledOverride = if (chapterReplaceTempDisabled) {
+                    false
+                } else {
+                    manualRules?.enabled
+                },
                 titleReplaceRulesOverride = manualRules?.title,
                 contentReplaceRulesOverride = manualRules?.content,
             )
@@ -1628,6 +1673,7 @@ object ReadBook : CoroutineScope by MainScope() {
             simulatedChapterSize = newBook.simulatedTotalChapterNum()
             if (simulatedChapterSize > 0 && durChapterIndex > simulatedChapterSize - 1) {
                 durChapterIndex = simulatedChapterSize - 1
+                tempReplaceDisabledChapterIndex = null
             }
             callBack?.upMenuView()
             if (callBack == null) {

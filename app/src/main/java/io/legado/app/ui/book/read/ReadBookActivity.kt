@@ -537,6 +537,10 @@ class ReadBookActivity : BaseReadBookActivity(),
                         item.isVisible = !AppConfig.manualReplaceRule
                         item.isChecked = book.getUseReplaceRule()
                     }
+                    R.id.menu_temp_disable_replace -> {
+                        item.isChecked =
+                            ReadBook.tempReplaceDisabledChapterIndex == ReadBook.durChapterIndex
+                    }
                     R.id.menu_manual_replace_rule -> item.isVisible = AppConfig.manualReplaceRule
                     R.id.menu_re_segment -> item.isChecked = book.getReSegment()
 //                    R.id.menu_enable_review -> {
@@ -903,6 +907,19 @@ class ReadBookActivity : BaseReadBookActivity(),
             }
 
             R.id.menu_effective_replaces -> showDialogFragment<EffectiveReplacesDialog>()
+
+            R.id.menu_temp_disable_replace -> {
+                if (ReadBook.tempReplaceDisabledChapterIndex == ReadBook.durChapterIndex) {
+                    ReadBook.tempReplaceDisabledChapterIndex = null
+                    toastOnUi(getString(R.string.temp_disable_replace_on))
+                } else {
+                    ReadBook.tempReplaceDisabledChapterIndex = ReadBook.durChapterIndex
+                    toastOnUi(getString(R.string.temp_disable_replace_off))
+                }
+                item.isChecked =
+                    ReadBook.tempReplaceDisabledChapterIndex == ReadBook.durChapterIndex
+                ReadBook.loadContent(ReadBook.durChapterIndex, resetPageOffset = false)
+            }
 
             R.id.menu_help -> showHelp()
         }
@@ -2842,6 +2859,11 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
+        // 退出阅读界面时立即失效"临时关闭本章替换净化"，并丢弃未替换的章节渲染缓存
+        ReadBook.tempReplaceDisabledChapterIndex?.let { disabledIndex ->
+            ReadBook.tempReplaceDisabledChapterIndex = null
+            ReadBook.dropTempReplaceDisabledChapters(disabledIndex)
+        }
         tts?.clearTts()
         textActionMenu.dismiss()
         popupAction.dismiss()

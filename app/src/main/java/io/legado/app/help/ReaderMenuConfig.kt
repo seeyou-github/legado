@@ -51,6 +51,7 @@ data class ReaderMenuConfig(
             "imageStyle",
             "updateToc",
             "effectiveReplaces",
+            "tempDisableReplace",
             "log",
             "help"
         )
