@@ -34,7 +34,15 @@ fun loadTextSelectMenuConfig(context: Context): TextSelectMenuConfig {
         context.putPrefString(PreferKey.textSelectMenuConfig, migrated.toJson())
         return migrated.normalized()
     }
-    return TextSelectMenuConfig.fromJson(json).normalized()
+    val config = TextSelectMenuConfig.fromJson(json).normalized()
+    if (config.bar.isEmpty() && config.more.isNotEmpty()) {
+        // 一级栏为空（历史残留或异常数据）会导致长按菜单只剩"更多"按钮，
+        // 识别为无效配置并恢复默认布局。
+        val fixed = TextSelectMenuConfig.default()
+        context.putPrefString(PreferKey.textSelectMenuConfig, fixed.toJson())
+        return fixed
+    }
+    return config
 }
 
 fun saveTextSelectMenuConfig(context: Context, config: TextSelectMenuConfig) {
