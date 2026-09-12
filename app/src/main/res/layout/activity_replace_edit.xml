@@ -39,18 +39,37 @@
                     tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
             </io.legado.app.ui.widget.text.TextInputLayout>
 
-            <io.legado.app.ui.widget.text.TextInputLayout
-                android:id="@+id/til_group"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/group">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <io.legado.app.lib.theme.view.ThemeEditText
-                    android:id="@+id/et_group"
-                    android:layout_width="match_parent"
+                <io.legado.app.ui.widget.text.TextInputLayout
+                    android:id="@+id/til_group"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
-            </io.legado.app.ui.widget.text.TextInputLayout>
+                    android:layout_weight="1"
+                    android:hint="@string/group">
+
+                    <io.legado.app.lib.theme.view.ThemeEditText
+                        android:id="@+id/et_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+                </io.legado.app.ui.widget.text.TextInputLayout>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_group_dropdown"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/menu"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_arrow_drop_down"
+                    android:tint="@color/primaryText" />
+            </LinearLayout>
 
             <io.legado.app.ui.widget.text.TextInputLayout
                 android:id="@+id/til_replace_rule"

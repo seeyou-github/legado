@@ -14,11 +14,14 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
+import io.legado.app.data.appDb
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.databinding.ActivityReplaceEditBinding
+import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.dialogs.SelectItem
 import io.legado.app.ui.code.CodeEditActivity
 import io.legado.app.ui.widget.keyboard.KeyboardToolPop
+import io.legado.app.ui.widget.popupActionMenu
 import io.legado.app.utils.GSON
 import io.legado.app.utils.imeHeight
 import io.legado.app.utils.sendToClip
@@ -145,6 +148,9 @@ class ReplaceEditActivity :
         binding.ivHelp.setOnClickListener {
             showHelp("regexHelp")
         }
+        binding.ivGroupDropdown.setOnClickListener {
+            showGroupSelectMenu()
+        }
         binding.etPreviewOutput.apply {
             keyListener = null
             showSoftInputOnFocus = false
@@ -175,6 +181,25 @@ class ReplaceEditActivity :
         binding.root.setOnApplyWindowInsetsListenerCompat { _, windowInsets ->
             softKeyboardTool.initialPadding = windowInsets.imeHeight
             windowInsets
+        }
+    }
+
+    private fun showGroupSelectMenu() {
+        Coroutine.async {
+            appDb.replaceRuleDao.allGroups()
+        }.onSuccess { groups ->
+            if (groups.isEmpty()) {
+                toastOnUi(getString(R.string.empty))
+                return@onSuccess
+            }
+            popupActionMenu(this@ReplaceEditActivity) {
+                groups.forEach { group ->
+                    item(group, group)
+                }
+            }.show(binding.ivGroupDropdown) { group ->
+                binding.etGroup.setText(group)
+                binding.etGroup.setSelection(group.length)
+            }
         }
     }
 
