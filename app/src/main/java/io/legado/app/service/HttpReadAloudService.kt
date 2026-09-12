@@ -46,7 +46,9 @@ import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -54,7 +56,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.Response
 import org.htmlunit.corejs.javascript.WrappedException
@@ -245,52 +249,79 @@ class HttpReadAloudService : BaseReadAloudService(),
                 ensureActive()
                 ensureSessionActive(sessionId)
                 val httpTts = ReadAloud.httpTTS ?: throw NoStackTraceException("tts is null")
-                contentList.forEachIndexed { index, content ->
-                    ensureActive()
-                    ensureSessionActive(sessionId)
-                    if (index < nowSpeak) return@forEachIndexed
-                    var text = content
-                    if (paragraphStartPos > 0 && index == nowSpeak) {
-                        text = text.substring(paragraphStartPos)
+                // 并发预缓存：后续段落在播放当前段落时并行下载，按序入队保证播放连贯
+                val pendingItems = contentList.mapIndexed { index, content ->
+                    if (index < nowSpeak) {
+                        null
+                    } else {
+                        var text = content
+                        if (paragraphStartPos > 0 && index == nowSpeak) {
+                            text = text.substring(paragraphStartPos)
+                        }
+                        Triple(index, md5SpeakFileName(text), text.replace(AppPattern.notReadAloudRegex, ""))
                     }
-                    val fileName = md5SpeakFileName(text)
-                    val speakText = text.replace(AppPattern.notReadAloudRegex, "")
-                    if (speakText.isEmpty()) {
-                        AppLog.put("阅读段落内容为空，使用无声音频代替。\n朗读文本：$text")
-                        createSilentSound(fileName)
-                    } else if (!hasSpeakFile(fileName)) {
-                        runCatching {
-                            val inputStream = getSpeakStream(httpTts, speakText, sessionId)
-                            if (inputStream != null) {
-                                createSpeakFile(fileName, inputStream)
+                }
+                val downloadFailed = runCatching {
+                    coroutineScope {
+                        val semaphore = Semaphore(AppConfig.readAloudWorkerCount)
+                        val downloadJobs = pendingItems.map { item ->
+                            if (item == null) {
+                                null
                             } else {
-                                createSilentSound(fileName)
+                                item to async {
+                                    semaphore.withPermit {
+                                        ensureActive()
+                                        ensureSessionActive(sessionId)
+                                        val (_, fileName, speakText) = item
+                                        if (speakText.isEmpty()) {
+                                            AppLog.put("阅读段落内容为空，使用无声音频代替。")
+                                            createSilentSound(fileName)
+                                        } else if (!hasSpeakFile(fileName)) {
+                                            val inputStream = getSpeakStream(httpTts, speakText, sessionId)
+                                            if (inputStream != null) {
+                                                createSpeakFile(fileName, inputStream)
+                                            } else {
+                                                createSilentSound(fileName)
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                        }.onFailure {
-                            if (it !is CancellationException && isSessionActive(sessionId)) {
-                                pauseReadAloud()
+                        }
+                        downloadJobs.forEach { pair ->
+                            val item = pair?.first ?: return@forEach
+                            val job = pair.second
+                            ensureActive()
+                            ensureSessionActive(sessionId)
+                            job.await()
+                            val file = getSpeakFileAsMd5(item.second)
+                            val mediaItem =
+                                createQueueMediaItem(Uri.fromFile(file), item.first, sessionId)
+                            val pauseDuration = normalizeHttpTtsPauseDuration(httpTts.pauseDuration)
+                            val pauseItem = if (shouldInsertHttpTtsPause(
+                                    item.first,
+                                    contentList.lastIndex,
+                                    pauseDuration
+                                )
+                            ) {
+                                createPauseMediaItem(
+                                    Uri.fromFile(getOrCreatePauseFile(pauseDuration)),
+                                    pauseDuration,
+                                    sessionId
+                                )
+                            } else {
+                                null
                             }
-                            return@execute
+                            enqueueMediaItems(sessionId, listOfNotNull(mediaItem, pauseItem))
                         }
                     }
-                    val file = getSpeakFileAsMd5(fileName)
-                    val mediaItem = createQueueMediaItem(Uri.fromFile(file), index, sessionId)
-                    val pauseDuration = normalizeHttpTtsPauseDuration(httpTts.pauseDuration)
-                    val pauseItem = if (shouldInsertHttpTtsPause(
-                            index,
-                            contentList.lastIndex,
-                            pauseDuration
-                        )
-                    ) {
-                        createPauseMediaItem(
-                            Uri.fromFile(getOrCreatePauseFile(pauseDuration)),
-                            pauseDuration,
-                            sessionId
-                        )
-                    } else {
-                        null
+                }.exceptionOrNull()
+                if (downloadFailed != null) {
+                    if (downloadFailed !is CancellationException && isSessionActive(sessionId)) {
+                        AppLog.put("朗读下载出错\n${downloadFailed.localizedMessage}", downloadFailed)
+                        pauseReadAloud()
                     }
-                    enqueueMediaItems(sessionId, listOfNotNull(mediaItem, pauseItem))
+                    return@withLock
                 }
                 ensureSessionActive(sessionId)
                 preDownloadAudios(httpTts, sessionId)
@@ -307,19 +338,27 @@ class HttpReadAloudService : BaseReadAloudService(),
             .filter { it.isNotEmpty() }
             .take(10)
             .toList()
-        contentList.forEach { content ->
-            currentCoroutineContext().ensureActive()
-            val fileName = md5SpeakFileName(content, textChapter)
-            val speakText = content.replace(AppPattern.notReadAloudRegex, "")
-            if (speakText.isEmpty()) {
-                createSilentSound(fileName)
-            } else if (!hasSpeakFile(fileName)) {
-                runCatching {
-                    val inputStream = getSpeakStream(httpTts, speakText, sessionId)
-                    if (inputStream != null) {
-                        createSpeakFile(fileName, inputStream)
-                    } else {
-                        createSilentSound(fileName)
+        coroutineScope {
+            val semaphore = Semaphore(AppConfig.readAloudWorkerCount)
+            contentList.forEach { content ->
+                currentCoroutineContext().ensureActive()
+                launch {
+                    semaphore.withPermit {
+                        currentCoroutineContext().ensureActive()
+                        val fileName = md5SpeakFileName(content, textChapter)
+                        val speakText = content.replace(AppPattern.notReadAloudRegex, "")
+                        if (speakText.isEmpty()) {
+                            createSilentSound(fileName)
+                        } else if (!hasSpeakFile(fileName)) {
+                            runCatching {
+                                val inputStream = getSpeakStream(httpTts, speakText, sessionId)
+                                if (inputStream != null) {
+                                    createSpeakFile(fileName, inputStream)
+                                } else {
+                                    createSilentSound(fileName)
+                                }
+                            }
+                        }
                     }
                 }
             }

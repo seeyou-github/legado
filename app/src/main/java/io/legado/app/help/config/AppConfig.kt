@@ -717,6 +717,12 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
 
     val streamReadAloudAudio get() = appCtx.getPrefBoolean(PreferKey.streamReadAloudAudio, false)
 
+    /** 朗读并发预缓存下载数，1-5 */
+    val readAloudWorkerCount: Int
+        get() = normalizeReadAloudWorkerCount(
+            appCtx.getPrefString(PreferKey.readAloudWorkerCount, "3")
+        )
+
     var audioSkipOpenCredits: Int
         get() = appCtx.getPrefInt(PreferKey.audioSkipOpenCredits, 0)
         set(value) = appCtx.putPrefInt(PreferKey.audioSkipOpenCredits, value.coerceAtLeast(0))
@@ -1009,5 +1015,9 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
 
 internal fun normalizeJsSourceApiToken(value: String?): String? {
     return value?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+internal fun normalizeReadAloudWorkerCount(value: String?): Int {
+    return value?.toIntOrNull()?.coerceIn(1, 5) ?: 3
 }
 

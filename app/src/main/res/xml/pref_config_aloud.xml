@@ -55,6 +55,15 @@
             android:key="streamReadAloudAudio"
             app:iconSpaceReserved="false" />
 
+        <io.legado.app.lib.prefs.NameListPreference
+            android:defaultValue="3"
+            android:entries="@array/read_aloud_worker_count_entries"
+            android:entryValues="@array/read_aloud_worker_count_values"
+            android:key="readAloudWorkerCount"
+            android:summary="@string/read_aloud_worker_count_summary"
+            android:title="@string/read_aloud_worker_count"
+            app:iconSpaceReserved="false" />
+
         <io.legado.app.lib.prefs.Preference
             android:title="@string/speak_engine"
             android:summary="TTS"
