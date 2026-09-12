@@ -899,6 +899,7 @@
     <string name="contact">Contact</string>
     <string name="license">License</string>
     <string name="other">Other</string>
+    <string name="my_other_summary">Scheduled tasks, web &amp; MCP service, bookmarks, reading records, file manage, about</string>
     <string name="official_account">开源阅读</string>
     <string name="follow_official_account">Follow WeChat Official Accounts</string>
     <string name="wechat">WeChat</string>

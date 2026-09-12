@@ -895,6 +895,7 @@
     <string name="contact">联系我们</string>
     <string name="license">开源许可</string>
     <string name="other">其它</string>
+    <string name="my_other_summary">定时任务、Web服务、书签、阅读记录、文件管理、关于</string>
     <string name="official_account">开源阅读</string>
     <string name="follow_official_account">关注公众号</string>
     <string name="wechat">微信</string>
