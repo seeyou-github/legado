@@ -39,9 +39,6 @@ jobs:
       - name: Patch build configuration
         working-directory: ${{ env.LEGADO_DIR }}
         run: |
-          sed -i 's/^\(\s*\)alias libs\.plugins\.google\.services/\1\/\/ alias libs.plugins.google.services/' app/build.gradle
-          perl -0pi -e 's/\n\s*\/\/firebase,[^\n]*\n\s*implementation platform\(libs\.firebase\.bom\)\n\s*implementation libs\.firebase\.analytics\n\s*implementation libs\.firebase\.perf\n/\n/g' app/build.gradle
-          rm -f app/google-services.json
           sed -i '/testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"/a\        ndk { abiFilters "arm64-v8a" }' app/build.gradle
           sed -i "/^def version = /c\def version = \"$VERSION\"" app/build.gradle
 

@@ -4,14 +4,12 @@ plugins {
 //    id 'kotlin-parcelize'
 //    //id 'kotlin-kapt'
 //    id 'com.google.devtools.ksp'
-//    id "com.google.gms.google-services"
 
     alias libs.plugins.android.application
     alias libs.plugins.kotlin.android
     alias libs.plugins.kotlin.parcelize
     alias libs.plugins.room
     alias libs.plugins.ksp
-    alias libs.plugins.google.services
 }
 apply from: 'download.gradle'
 
@@ -345,11 +343,6 @@ dependencies {
     //noinspection GradleDependency,GradlePackageUpdate
     implementation(libs.hutool.crypto)
     implementation(libs.bouncycastle.provider)
-
-    //firebase, 崩溃统计和性能统计
-    implementation platform(libs.firebase.bom)
-    implementation libs.firebase.analytics
-    implementation libs.firebase.perf
 
     implementation libs.glide.recyclerview
 
