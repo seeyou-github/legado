@@ -367,7 +367,7 @@ abstract class BaseReadAloudService : BaseService(),
         readAloudJob = execute(executeContext = IO) {
             val textChapter = ReadBook.curTextChapter ?: return@execute
             if (!textChapter.isCompleted) return@execute
-            val readAloudByPage = getPrefBoolean(PreferKey.readAloudByPage)
+            val readAloudByPage = getPrefBoolean(PreferKey.readAloudByPage, true)
             val contentList = textChapter.getNeedReadAloud(0, readAloudByPage, 0)
                 .split("\n")
                 .filter { it.isNotEmpty() }
@@ -381,7 +381,7 @@ abstract class BaseReadAloudService : BaseService(),
                     pos = tmp
                 }
             }
-            var nowSpeak = textChapter.getParagraphNum(readAloudNumber + 1, readAloudByPage) - 1
+            var nowSpeak = textChapter.getParagraphNum(readAloudNumber + 1, false) - 1
             if (shouldRewindReadAloudToSentenceStart(
                     rewindToSentenceStart,
                     readAloudByPage,
@@ -399,12 +399,21 @@ abstract class BaseReadAloudService : BaseService(),
                 pos = page.chapterPosition -
                         textChapter.paragraphs[nowSpeak].chapterPosition
             }
+            if (readAloudByPage && !toLast) {
+                pos = (readAloudNumber - textChapter.paragraphs[nowSpeak].chapterPosition)
+                    .coerceAtLeast(0)
+            }
             val readAloudChapterStart = readAloudNumber
             var consumedToLast = false
             if (toLast) {
                 consumedToLast = true
                 readAloudNumber = textChapter.getLastParagraphPosition()
-                nowSpeak = contentList.lastIndex
+                nowSpeak = if (readAloudByPage) {
+                    (textChapter.getParagraphNum(readAloudNumber + 1, false) - 1)
+                        .coerceIn(0, contentList.lastIndex)
+                } else {
+                    contentList.lastIndex
+                }
                 if (page.paragraphs.size == 1) {
                     pos = page.chapterPosition -
                             textChapter.paragraphs[nowSpeak].chapterPosition
@@ -508,10 +517,6 @@ abstract class BaseReadAloudService : BaseService(),
                 paragraphStartPos = 0
             } while (contentList[nowSpeak].matches(AppPattern.notReadAloudRegex))
             textChapter?.let {
-                if (readAloudByPage) {
-                    val paragraphs = it.getParagraphs(true)
-                    if (!paragraphs[nowSpeak].isParagraphEnd) readAloudNumber++
-                }
                 if (readAloudNumber < it.getReadLength(pageIndex)) {
                     pageIndex--
                     ReadBook.moveToPrevPage(syncReadAloudFollow = true)
@@ -532,10 +537,6 @@ abstract class BaseReadAloudService : BaseService(),
             paragraphStartPos = 0
             nowSpeak++
             textChapter?.let {
-                if (readAloudByPage) {
-                    val paragraphs = it.getParagraphs(true)
-                    if (!paragraphs[nowSpeak].isParagraphEnd) readAloudNumber--
-                }
                 if (pageIndex + 1 < it.pageSize
                     && readAloudNumber >= it.getReadLength(pageIndex + 1)
                 ) {

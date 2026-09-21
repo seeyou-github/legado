@@ -35,7 +35,7 @@
             app:iconSpaceReserved="false" />
 
         <io.legado.app.lib.prefs.SwitchPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:title="@string/read_aloud_by_page"
             android:summary="@string/read_aloud_by_page_summary"
             android:key="readAloudByPage"

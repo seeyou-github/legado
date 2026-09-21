@@ -231,12 +231,24 @@ data class TextChapter(
         if (pages.isNotEmpty()) {
             for (index in pageIndex..min(pageEndIndex, pages.lastIndex)) {
                 stringBuilder.append(pages[index].text.replace(Regex("[袮꧁]"), " "))
-                if (pageSplit && !stringBuilder.endsWith("\n")) {
+                if (pageSplit && !stringBuilder.endsWith("\n") && !isParagraphSplitAcrossPages(index)) {
                     stringBuilder.append("\n")
                 }
             }
         }
         return stringBuilder.substring(startPos).toString()
+    }
+
+    /**
+     * 当前页的段落是否延续到下一页
+     * 按页朗读时这种页面边界不再是分隔点,避免同一段被拆成两部分朗读
+     */
+    private fun isParagraphSplitAcrossPages(pageIndex: Int): Boolean {
+        val current = pages.getOrNull(pageIndex) ?: return false
+        val next = pages.getOrNull(pageIndex + 1) ?: return false
+        val lastLine = current.lines.lastOrNull() ?: return false
+        val nextLine = next.lines.firstOrNull() ?: return false
+        return !lastLine.isParagraphEnd && nextLine.paragraphNum == lastLine.paragraphNum
     }
 
     fun getParagraphNum(
