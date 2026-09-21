@@ -296,6 +296,12 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefInt(PreferKey.bookshelfLayout, value)
         }
 
+    var exploreShowLayoutMode: Int
+        get() = appCtx.getPrefInt(PreferKey.exploreShowLayoutMode, 0).coerceIn(0, 1)
+        set(value) {
+            appCtx.putPrefInt(PreferKey.exploreShowLayoutMode, value.coerceIn(0, 1))
+        }
+
     var saveTabPosition: Int
         get() = appCtx.getPrefInt(PreferKey.saveTabPosition, 0)
         set(value) {

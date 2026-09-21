@@ -53,6 +53,7 @@ object PreferKey {
     const val enableReview = "enableReview"
     const val showRss = "showRss"
     const val bookshelfLayout = "bookshelfLayout"
+    const val exploreShowLayoutMode = "exploreShowLayoutMode"
     const val bookshelfSort = "bookshelfSort"
     const val bookExportFileName = "bookExportFileName"
     const val bookImportFileName = "bookImportFileName"

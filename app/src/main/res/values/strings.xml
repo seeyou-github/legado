@@ -481,6 +481,7 @@
     <string name="replace_scope_cur_book">Replace current book</string>
     <string name="replace_scope_cur_source">Replace current book source</string>
     <string name="replace_view_list">List</string>
+    <string name="explore_view_grid">Grid</string>
     <string name="replace_view_group">Group</string>
     <string name="replace_view_scope">Scope</string>
     <string name="replace_scope_global_rules">Global rules</string>
