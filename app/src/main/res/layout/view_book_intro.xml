@@ -13,5 +13,5 @@
     android:text="@string/book_intro"
     android:textColor="@color/secondaryText"
     android:textIsSelectable="true"
-    android:textSize="14sp"
+    android:textSize="18sp"
     tools:ignore="RtlSymmetry" />

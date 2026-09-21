@@ -169,16 +169,6 @@
                                 android:textColor="@color/tv_text_summary"
                                 android:textSize="14sp"
                                 tools:text="@string/origin_format" />
-
-                            <io.legado.app.ui.widget.text.AccentBgTextView
-                                android:id="@+id/tv_change_source"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:paddingHorizontal="6dp"
-                                android:text="@string/change_origin"
-                                android:textSize="13sp"
-                                app:radius="2dp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -276,16 +266,6 @@
                                 android:textColor="@color/tv_text_summary"
                                 android:textSize="14sp"
                                 tools:text="@string/toc_s" />
-
-                            <io.legado.app.ui.widget.text.AccentBgTextView
-                                android:id="@+id/tv_toc_view"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:paddingHorizontal="6dp"
-                                android:text="@string/view_toc"
-                                android:textSize="13sp"
-                                app:radius="2dp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -345,33 +325,71 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/background_menu"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="8dp">
 
-                    <io.legado.app.ui.widget.text.AccentTonalBgTextView
-                        android:id="@+id/tv_shelf"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:includeFontPadding="false"
-                        android:text="@string/remove_from_bookshelf"
-                        android:textSize="15sp"
-                        app:radius="8dp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <io.legado.app.ui.widget.text.AccentBgTextView
-                        android:id="@+id/tv_read"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center"
-                        android:includeFontPadding="false"
-                        android:text="@string/reading"
-                        android:textSize="15sp"
-                        app:radius="8dp" />
+                        <io.legado.app.ui.widget.text.AccentTonalBgTextView
+                            android:id="@+id/tv_toc_view"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/view_toc"
+                            android:textSize="15sp"
+                            app:radius="8dp" />
+
+                        <io.legado.app.ui.widget.text.AccentTonalBgTextView
+                            android:id="@+id/tv_change_source"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/change_origin"
+                            android:textSize="15sp"
+                            app:radius="8dp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <io.legado.app.ui.widget.text.AccentTonalBgTextView
+                            android:id="@+id/tv_shelf"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/remove_from_bookshelf"
+                            android:textSize="15sp"
+                            app:radius="8dp" />
+
+                        <io.legado.app.ui.widget.text.AccentBgTextView
+                            android:id="@+id/tv_read"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/reading"
+                            android:textSize="15sp"
+                            app:radius="8dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
             </LinearLayout>

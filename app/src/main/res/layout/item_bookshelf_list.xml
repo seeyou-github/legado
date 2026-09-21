@@ -100,9 +100,11 @@
         android:text="@string/author"
         android:textColor="@color/tv_text_summary"
         android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/iv_author"
         app:layout_constraintRight_toLeftOf="@id/fl_has_new"
-        app:layout_constraintTop_toBottomOf="@+id/tv_name"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5"
         tools:ignore="RtlSymmetry,TextContrastCheck" />
 
     <TextView
