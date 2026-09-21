@@ -30,14 +30,15 @@
 
             <io.legado.app.ui.widget.image.GroupCoverView
                 android:id="@+id/iv_cover"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
                 android:scrollbars="none"
                 android:transitionName="img_cover"
+                app:layout_constraintDimensionRatio="3:4"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="UnusedAttribute"
-                tools:layout_editor_absoluteX="4dp" />
+                tools:ignore="UnusedAttribute" />
 
             <TextView
                 android:id="@+id/tv_name"
