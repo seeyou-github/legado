@@ -11,12 +11,18 @@ import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.databinding.ItemSearchBinding
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.utils.gone
 import io.legado.app.utils.visible
 
 
 class SearchAdapter(context: Context, val callBack: CallBack) :
     DiffRecyclerAdapter<SearchBook, ItemSearchBinding>(context) {
+
+    //主题色只解析一次,避免列表滚动时反复读取主题属性
+    private val readRecordNameColor by lazy { context.accentColor }
+    private val normalNameColor by lazy { context.primaryTextColor }
 
     override val keepScrollPosition = true
 
@@ -114,12 +120,20 @@ class SearchAdapter(context: Context, val callBack: CallBack) :
     }
 
     /**
+     * 读过的书(累计阅读时长超过1分钟)书名用主题强调色,
      * 在书架中显示绿点,不在书架但有阅读记录显示橙点
      */
     private fun upIndicator(binding: ItemSearchBinding, searchBook: SearchBook) {
         val isInBookshelf = callBack.isInBookshelf(searchBook)
         binding.ivInBookshelf.isVisible = isInBookshelf
         binding.ivReadRecord.isVisible = !isInBookshelf && callBack.hasReadRecord(searchBook)
+        binding.tvName.setTextColor(
+            if (callBack.hasReadRecordOverMinute(searchBook)) {
+                readRecordNameColor
+            } else {
+                normalNameColor
+            }
+        )
     }
 
     private fun upLasted(binding: ItemSearchBinding, latestChapterTitle: String?) {
@@ -154,6 +168,11 @@ class SearchAdapter(context: Context, val callBack: CallBack) :
          * 是否有阅读记录
          */
         fun hasReadRecord(book: SearchBook): Boolean
+
+        /**
+         * 是否读过这本书(累计阅读时长超过1分钟)
+         */
+        fun hasReadRecordOverMinute(book: SearchBook): Boolean
 
         /**
          * 显示书籍详情

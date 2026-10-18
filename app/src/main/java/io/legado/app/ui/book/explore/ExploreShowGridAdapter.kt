@@ -9,6 +9,8 @@ import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.databinding.ItemExploreGridBinding
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.primaryTextColor
 
 
 /**
@@ -16,6 +18,10 @@ import io.legado.app.help.config.AppConfig
  */
 class ExploreShowGridAdapter(context: Context, val callBack: ExploreShowAdapter.CallBack) :
     RecyclerAdapter<SearchBook, ItemExploreGridBinding>(context) {
+
+    //主题色只解析一次,避免列表滚动时反复读取主题属性
+    private val readRecordNameColor by lazy { context.accentColor }
+    private val normalNameColor by lazy { context.primaryTextColor }
 
     override fun getViewBinding(parent: ViewGroup): ItemExploreGridBinding {
         return ItemExploreGridBinding.inflate(inflater, parent, false)
@@ -40,6 +46,7 @@ class ExploreShowGridAdapter(context: Context, val callBack: ExploreShowAdapter.
     private fun bind(binding: ItemExploreGridBinding, item: SearchBook) {
         binding.run {
             tvName.text = item.name
+            upNameColor(binding, item)
             ivInBookshelf.isVisible = callBack.isInBookshelf(item)
             ivCover.load(
                 item,
@@ -48,12 +55,23 @@ class ExploreShowGridAdapter(context: Context, val callBack: ExploreShowAdapter.
         }
     }
 
+    /**
+     * 读过的书(阅读时长超过1分钟)书名用主题强调色,提示用户读过,其它书恢复默认色
+     */
+    private fun upNameColor(binding: ItemExploreGridBinding, item: SearchBook) {
+        binding.tvName.setTextColor(
+            if (callBack.hasReadRecordOverMinute(item)) readRecordNameColor else normalNameColor
+        )
+    }
+
     private fun bindChange(binding: ItemExploreGridBinding, item: SearchBook, bundle: Bundle) {
         binding.run {
             bundle.keySet().forEach {
                 when (it) {
                     "isInBookshelf" -> ivInBookshelf.isVisible =
                         callBack.isInBookshelf(item)
+
+                    "hasReadRecord" -> upNameColor(binding, item)
                 }
             }
         }

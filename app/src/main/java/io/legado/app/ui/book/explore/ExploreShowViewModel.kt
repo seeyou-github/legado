@@ -12,6 +12,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.SearchBook
+import io.legado.app.help.book.ReadRecordIndex
 import io.legado.app.help.book.SearchBookShelfHelp
 import io.legado.app.help.book.isNotShelf
 import io.legado.app.help.book.mergeActiveShelfBook
@@ -30,6 +31,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -38,6 +40,14 @@ import java.util.concurrent.ConcurrentHashMap
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExploreShowViewModel(application: Application) : BaseViewModel(application) {
     val bookshelf: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    /**
+     * 阅读时长累计超过1分钟的书籍索引,只在阅读记录变化时整体重建,列表滚动时零数据库访问
+     */
+    @Volatile
+    var readRecordIndex: ReadRecordIndex = ReadRecordIndex.EMPTY
+        private set
+
     val upAdapterLiveData = MutableLiveData<String>()
     val booksData = MutableLiveData<List<SearchBook>>()
     val addBooksData = MutableLiveData<List<SearchBook>>()
@@ -73,6 +83,22 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
             }
         }.onError {
             AppLog.put("加载书架数据失败", it)
+        }
+        execute {
+            //阅读记录会在阅读后变化,用流监听,保证返回发现列表时是最新的
+            //只取阅读时长超过1分钟的书;继续阅读同一本书时readTime变化但查询结果不变,
+            //distinctUntilChanged 过滤掉这类通知,避免无谓的索引重建和界面刷新
+            appDb.readRecordDao.flowBooksReadOver(ReadRecordIndex.MIN_READ_TIME_MS)
+                .distinctUntilChanged()
+                .catch {
+                    AppLog.put("发现列表界面获取阅读记录失败\n${it.localizedMessage}", it)
+                }
+                .collect {
+                    readRecordIndex = ReadRecordIndex.of(it)
+                    upAdapterLiveData.postValue("hasReadRecord")
+                }
+        }.onError {
+            AppLog.put("加载阅读记录失败", it)
         }
     }
 
@@ -261,6 +287,13 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
         val bookUrl = book.bookUrl
         val key = if (author.isNotBlank()) "$name-$author" else name
         return bookshelf.contains(key) || bookshelf.contains(bookUrl)
+    }
+
+    /**
+     * 是否读过这本书(累计阅读时长超过1分钟),纯内存查表,供列表绑定调用
+     */
+    fun hasReadRecordOverMinute(book: SearchBook): Boolean {
+        return readRecordIndex.contains(book.name, book.author)
     }
 
     private data class ShelfState(

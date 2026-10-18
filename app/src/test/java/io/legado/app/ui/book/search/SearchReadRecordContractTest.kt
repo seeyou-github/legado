@@ -1,5 +1,6 @@
 package io.legado.app.ui.book.search
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -47,6 +48,35 @@ class SearchReadRecordContractTest {
             )
         )
         assertTrue(activity.contains("""viewModel.upAdapterLiveData.postValue("hasReadRecord")"""))
+    }
+
+    @Test
+    fun `books read over one minute get the accent colored name`() {
+        val viewModel = projectFile(
+            "src/main/java/io/legado/app/ui/book/search/SearchViewModel.kt"
+        ).readText().replace(Regex("\\s+"), " ")
+
+        assertTrue(
+            viewModel.contains(
+                "appDb.readRecordDao.flowBooksReadOver(ReadRecordIndex.MIN_READ_TIME_MS)"
+            )
+        )
+        assertTrue(viewModel.contains("readRecordOverIndex = ReadRecordIndex.of(it)"))
+        assertTrue(viewModel.contains("readRecordOverIndex.contains(book.name, book.author)"))
+
+        val adapter = projectFile(
+            "src/main/java/io/legado/app/ui/book/search/SearchAdapter.kt"
+        ).readText().replace(Regex("\\s+"), " ")
+
+        assertFalse(adapter.contains("appDb"))
+        assertTrue(adapter.contains("callBack.hasReadRecordOverMinute(searchBook)"))
+        //主题色只解析一次,不能放在每次 bind 里
+        assertTrue(adapter.contains("by lazy { context.accentColor }"))
+
+        val activity = projectFile(
+            "src/main/java/io/legado/app/ui/book/search/SearchActivity.kt"
+        ).readText().replace(Regex("\\s+"), " ")
+        assertTrue(activity.contains("return viewModel.hasReadRecordOverMinute(book)"))
     }
 
     @Test

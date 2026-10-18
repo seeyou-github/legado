@@ -345,6 +345,10 @@ class ExploreShowActivity : VMBaseActivity<ActivityExploreShowBinding, ExploreSh
         return viewModel.isInBookShelf(book)
     }
 
+    override fun hasReadRecordOverMinute(book: SearchBook): Boolean {
+        return viewModel.hasReadRecordOverMinute(book)
+    }
+
     override fun showBookInfo(book: SearchBook) {
         startActivity<BookInfoActivity> {
             putExtra("name", book.name)

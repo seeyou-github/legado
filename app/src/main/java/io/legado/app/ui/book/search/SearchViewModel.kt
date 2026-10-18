@@ -32,6 +32,13 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
     var readRecordIndex: ReadRecordIndex = ReadRecordIndex.EMPTY
         private set
 
+    /**
+     * 阅读时长累计超过1分钟的书籍索引,用于把书名标成强调色
+     */
+    @Volatile
+    var readRecordOverIndex: ReadRecordIndex = ReadRecordIndex.EMPTY
+        private set
+
     val upAdapterLiveData = MutableLiveData<String>()
     var searchBookLiveData = ConflateLiveData<List<SearchBook>>(1000)
     val searchScope: SearchScope = SearchScope(AppConfig.searchScope)
@@ -88,6 +95,18 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
             AppLog.put("加载阅读记录失败", it)
         }
         execute {
+            //读过的书(累计阅读时长超过1分钟)书名标成强调色,同样用流监听保证返回搜索界面时是最新的
+            appDb.readRecordDao.flowBooksReadOver(ReadRecordIndex.MIN_READ_TIME_MS)
+                .distinctUntilChanged().catch {
+                    AppLog.put("搜索界面获取阅读记录失败\n${it.localizedMessage}", it)
+                }.collect {
+                    readRecordOverIndex = ReadRecordIndex.of(it)
+                    upAdapterLiveData.postValue("hasReadRecord")
+                }
+        }.onError {
+            AppLog.put("加载阅读记录失败", it)
+        }
+        execute {
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
                 books.filterNot { it.isNotShelf }
@@ -122,6 +141,16 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
             return false
         }
         return readRecordIndex.contains(book.name, book.author)
+    }
+
+    /**
+     * 是否读过这本书(累计阅读时长超过1分钟),用于把书名标成强调色
+     */
+    fun hasReadRecordOverMinute(book: SearchBook): Boolean {
+        if (!AppConfig.showSearchReadRecord) {
+            return false
+        }
+        return readRecordOverIndex.contains(book.name, book.author)
     }
 
     /**

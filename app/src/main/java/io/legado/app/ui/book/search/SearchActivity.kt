@@ -513,6 +513,13 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
     }
 
     /**
+     * 是否读过这本书(累计阅读时长超过1分钟)
+     */
+    override fun hasReadRecordOverMinute(book: SearchBook): Boolean {
+        return viewModel.hasReadRecordOverMinute(book)
+    }
+
+    /**
      * 显示书籍详情
      */
     override fun showBookInfo(book: Book) {

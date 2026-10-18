@@ -19,6 +19,21 @@ interface ReadRecordDao {
     )
     fun flowBooks(): Flow<List<ReadRecordBook>>
 
+    /**
+     * 阅读时长超过 [minReadTime] 的书籍,同一本书在多个设备上会有多条记录,按书名聚合后比较
+     * 结果按书名排序,便于上层做 distinctUntilChanged 去重
+     */
+    @Query(
+        """select bookName, author from readRecord
+            where bookName in (
+                select bookName from readRecord
+                group by bookName
+                having sum(readTime) > :minReadTime
+            )
+            order by bookName"""
+    )
+    fun flowBooksReadOver(minReadTime: Long): Flow<List<ReadRecordBook>>
+
     @get:Query(
         """
         select bookName, sum(readTime) as readTime, max(lastRead) as lastRead,

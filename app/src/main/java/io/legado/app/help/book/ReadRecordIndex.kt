@@ -25,6 +25,11 @@ class ReadRecordIndex private constructor(
 
     companion object {
 
+        /**
+         * 累计阅读时长超过该值(毫秒)才认为读过,用于把书名标成强调色
+         */
+        const val MIN_READ_TIME_MS = 60_000L
+
         val EMPTY = ReadRecordIndex(emptyMap())
 
         fun of(records: List<ReadRecordBook>): ReadRecordIndex {

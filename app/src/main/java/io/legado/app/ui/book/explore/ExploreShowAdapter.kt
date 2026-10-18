@@ -10,12 +10,18 @@ import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.databinding.ItemSearchBinding
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.utils.gone
 import io.legado.app.utils.visible
 
 
 class ExploreShowAdapter(context: Context, val callBack: CallBack) :
     RecyclerAdapter<SearchBook, ItemSearchBinding>(context) {
+
+    //主题色只解析一次,避免列表滚动时反复读取主题属性
+    private val readRecordNameColor by lazy { context.accentColor }
+    private val normalNameColor by lazy { context.primaryTextColor }
 
     override fun getViewBinding(parent: ViewGroup): ItemSearchBinding {
         return ItemSearchBinding.inflate(inflater, parent, false)
@@ -41,6 +47,7 @@ class ExploreShowAdapter(context: Context, val callBack: CallBack) :
     private fun bind(binding: ItemSearchBinding, item: SearchBook) {
         binding.run {
             tvName.text = item.name
+            upNameColor(binding, item)
             tvAuthor.text = context.getString(R.string.author_show, item.author)
             ivInBookshelf.isVisible = callBack.isInBookshelf(item)
             if (item.latestChapterTitle.isNullOrEmpty()) {
@@ -64,12 +71,23 @@ class ExploreShowAdapter(context: Context, val callBack: CallBack) :
         }
     }
 
+    /**
+     * 读过的书(阅读时长超过1分钟)书名用主题强调色,提示用户读过,其它书恢复默认色
+     */
+    private fun upNameColor(binding: ItemSearchBinding, item: SearchBook) {
+        binding.tvName.setTextColor(
+            if (callBack.hasReadRecordOverMinute(item)) readRecordNameColor else normalNameColor
+        )
+    }
+
     private fun bindChange(binding: ItemSearchBinding, item: SearchBook, bundle: Bundle) {
         binding.run {
             bundle.keySet().forEach {
                 when (it) {
                     "isInBookshelf" -> ivInBookshelf.isVisible =
                         callBack.isInBookshelf(item)
+
+                    "hasReadRecord" -> upNameColor(binding, item)
                 }
             }
         }
@@ -88,6 +106,11 @@ class ExploreShowAdapter(context: Context, val callBack: CallBack) :
          * 是否已经加入书架
          */
         fun isInBookshelf(book: SearchBook): Boolean
+
+        /**
+         * 是否读过这本书(累计阅读时长超过1分钟)
+         */
+        fun hasReadRecordOverMinute(book: SearchBook): Boolean
 
         fun showBookInfo(book: SearchBook)
     }
