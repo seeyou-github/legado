@@ -21,6 +21,7 @@ import io.legado.app.model.analyzeRule.AnalyzeRule.Companion.setCoroutineContext
 import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.utils.isTrue
 import io.legado.app.utils.mapAsync
+import io.legado.app.utils.StringUtils.wordCountFormat
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.flow
 import org.htmlunit.corejs.javascript.Context
@@ -251,7 +252,7 @@ object BookChapterList {
                     if (tocCountWords) {
                         AppPattern.wordCountRegex.find(info)?.let { match ->
                             bookChapter.apply {
-                                wordCount = match.groupValues[1].trim()
+                                wordCount = wordCountFormat(match.groupValues[1].trim())
                                 tag = info.replaceFirst(match.value, "")
                             }
                         } ?: run { bookChapter.tag = info }

@@ -6,6 +6,7 @@ import android.util.Base64
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -24,7 +25,15 @@ object StringUtils {
     private const val TIME_UNIT = 60
     private val ChnMap = chnMap
     private val wordCountFormatter by lazy {
-        DecimalFormat("#.#")
+        // 字数忽略小数点后面的数字, 例如 200.1万字 显示为 200万字
+        DecimalFormat("#").apply {
+            roundingMode = RoundingMode.DOWN
+        }
+    }
+
+    // 匹配带小数的字数(整数部分不以0开头), 例如 200.1万字
+    private val wordCountDecimalRegex by lazy {
+        Regex("([1-9]\\d*)\\.\\d+")
     }
 
     private val chnMap: HashMap<Char, Int>
@@ -263,7 +272,8 @@ object StringUtils {
                 }
             }
         } else {
-            wordsS = wc
+            // 忽略小数点后面的数字, 例如 200.1万字 -> 200万字
+            wordsS = wordCountDecimalRegex.replace(wc, "$1")
         }
         return wordsS
     }
