@@ -396,6 +396,11 @@ object Backup {
         for (i in 0 until paths.size) {
             paths[i] = backupPath + File.separator + paths[i]
         }
+        //朗读引擎列表始终完整备份，不受备份内容选择影响
+        val httpTtsFilePath = backupPath + File.separator + "httpTTS.json"
+        if (httpTtsFilePath !in paths) {
+            paths.add(httpTtsFilePath)
+        }
         paths.addAll(
             prepareBackupMediaDirectories(
                 appCtx.externalFiles,

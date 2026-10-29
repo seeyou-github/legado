@@ -138,6 +138,34 @@ internal fun parseRuntimeSourceCacheBackup(json: String): List<Cache> {
 }
 
 /**
+ * 合并备份中的朗读引擎与本地已有的朗读引擎
+ *
+ * 本地已有同名引擎时保持本地不变（不覆盖本地修改），只补充本地没有的引擎；
+ * 备份内同名的重复项只保留第一个，id 冲突时换一个新 id 后插入。
+ */
+internal fun mergeRestoredHttpTts(
+    restored: List<HttpTTS>,
+    existing: List<HttpTTS>,
+): List<HttpTTS> {
+    val localNames = existing.mapTo(hashSetOf<String>()) { it.name }
+    val usedIds = existing.mapTo(hashSetOf<Long>()) { it.id }
+    val addedNames = hashSetOf<String>()
+    val merged = arrayListOf<HttpTTS>()
+    restored.forEach { tts ->
+        if (tts.name.isBlank() || tts.name in localNames || !addedNames.add(tts.name)) {
+            return@forEach
+        }
+        var id = tts.id
+        while (id in usedIds) {
+            id++
+        }
+        usedIds.add(id)
+        merged.add(if (id == tts.id) tts else tts.copy(id = id))
+    }
+    return merged
+}
+
+/**
  * 恢复
  */
 object Restore {
@@ -350,8 +378,12 @@ object Restore {
         fileToListT<TxtTocRule>(path, "txtTocRule.json")?.let {
             appDb.txtTocRuleDao.insert(*it.toTypedArray())
         }
-        fileToListT<HttpTTS>(path, "httpTTS.json")?.let {
-            appDb.httpTTSDao.insert(*it.toTypedArray())
+        fileToListT<HttpTTS>(path, "httpTTS.json")?.let { restored ->
+            //与本地朗读引擎合并：本地已有引擎保持不变，只补充备份中存在而本地缺失的引擎
+            val merged = mergeRestoredHttpTts(restored, appDb.httpTTSDao.all)
+            if (merged.isNotEmpty()) {
+                appDb.httpTTSDao.insert(*merged.toTypedArray())
+            }
         }
         fileToListT<DictRule>(path, "dictRule.json")?.let {
             appDb.dictRuleDao.insert(*it.toTypedArray())
