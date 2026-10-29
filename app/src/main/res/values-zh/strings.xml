@@ -35,6 +35,8 @@
     <string name="draw">提醒</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
+    <string name="delete_selected">删除选定</string>
+    <string name="sure_del_selected">确定删除选中的 %d 个朗读引擎？</string>
     <string name="delete_select_group">删除当前分组</string>
     <string name="delete_all">删除所有</string>
     <string name="replace">替换</string>
@@ -842,6 +844,7 @@
     <string name="chinese_converter">中文简繁体转换</string>
     <string name="change_icon_error">图标为矢量图标，Android 8.0 以前不支持</string>
     <string name="aloud_config">朗读设置</string>
+    <string name="read_aloud_setting_summary">朗读引擎、语速等朗读相关设置</string>
     <string name="main_activity">主界面</string>
     <string name="selectText">长按选择文本</string>
     <string name="long_press_select_paragraph">长按选择整段</string>

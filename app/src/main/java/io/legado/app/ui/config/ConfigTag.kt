@@ -8,5 +8,6 @@ object ConfigTag {
     const val COVER_CONFIG = "coverConfig"
     const val WELCOME_CONFIG = "welcomeConfig"
     const val MY_OTHER_CONFIG = "myOtherConfig"
+    const val READ_ALOUD_CONFIG = "readAloudConfig"
 
 }

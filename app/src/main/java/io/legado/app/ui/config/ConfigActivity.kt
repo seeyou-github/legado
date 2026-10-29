@@ -13,6 +13,7 @@ import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.EventBus
 import io.legado.app.databinding.ActivityConfigBinding
 import io.legado.app.lib.dialogs.selector
+import io.legado.app.ui.book.read.config.ReadAloudPreferenceFragment
 import io.legado.app.ui.main.my.MyOtherConfigFragment
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.toastOnUi
@@ -31,6 +32,10 @@ class ConfigActivity : VMBaseActivity<ActivityConfigBinding, ConfigViewModel>() 
             ConfigTag.COVER_CONFIG -> replaceFragment<CoverConfigFragment>(configTag)
             ConfigTag.WELCOME_CONFIG -> replaceFragment<WelcomeConfigFragment>(configTag)
             ConfigTag.MY_OTHER_CONFIG -> replaceFragment<MyOtherConfigFragment>(configTag)
+            ConfigTag.READ_ALOUD_CONFIG -> {
+                replaceFragment<ReadAloudPreferenceFragment>(configTag)
+                setTitle(R.string.aloud_config)
+            }
             else -> finish()
         }
     }

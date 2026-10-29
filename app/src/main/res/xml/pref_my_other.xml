@@ -5,6 +5,13 @@
     app:allowDividerBelow="false">
 
     <io.legado.app.lib.prefs.Preference
+        android:icon="@drawable/ic_volume_up"
+        android:key="readAloudConfig"
+        android:summary="@string/read_aloud_setting_summary"
+        android:title="@string/aloud_config"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.Preference
         android:icon="@drawable/ic_auto_page"
         android:key="autoTaskManage"
         android:summary="@string/auto_task_manage_desc"

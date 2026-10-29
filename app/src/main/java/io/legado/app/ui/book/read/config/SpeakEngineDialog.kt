@@ -1,5 +1,6 @@
 package io.legado.app.ui.book.read.config
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.MenuItem
@@ -79,6 +80,8 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
     private val sysTtsViews = arrayListOf<RadioButton>()
     private val callBack: CallBack? get() = parentFragment as? CallBack
     private var currentSelect = -1
+    private var selectAllMode = false
+    private val selectedIds = hashSetOf<Long>()
     private val importDocResult = registerForActivityResult(HandleFileContract()) {
         it.uri?.let { uri ->
             showDialogFragment(ImportHttpTtsDialog(uri.toString()))
@@ -158,14 +161,19 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
                 }
             }
         }
-        tvFooterLeft.setText(R.string.book)
-        tvFooterLeft.visible()
-        tvFooterLeft.setOnClickListener {
+        tvFooterBook.setText(R.string.book)
+        tvFooterBook.visible()
+        tvFooterBook.setOnClickListener {
             ReadBook.book?.setTtsEngine(ttsEngine)
             callBack?.upSpeakEngineSummary()
             ReadAloud.upReadAloudClass()
             dismissAllowingStateLoss()
         }
+        tvFooterSelectAll.setText(R.string.select_all)
+        tvFooterSelectAll.visible()
+        tvFooterSelectAll.setOnClickListener { toggleSelectAll() }
+        tvFooterDeleteSelected.setText(R.string.delete_selected)
+        tvFooterDeleteSelected.setOnClickListener { deleteSelected() }
         tvOk.setText(R.string.general)
         tvOk.visible()
         tvOk.setOnClickListener {
@@ -287,6 +295,76 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
         adapter.notifyItemRangeChanged(adapter.getHeaderCount(), adapter.itemCount)
     }
 
+    private fun toggleSelectAll() {
+        if (selectAllMode) {
+            exitSelectAll()
+        } else {
+            enterSelectAll()
+        }
+    }
+
+    /**
+     * 全选，SYS 标签的置顶列表项（系统引擎）不参与选择
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    private fun enterSelectAll() {
+        val items = adapter.getItems()
+        if (items.isEmpty()) return
+        selectAllMode = true
+        selectedIds.clear()
+        items.forEach { selectedIds.add(it.id) }
+        sysTtsViews.forEach { it.isChecked = false }
+        binding.tvFooterDeleteSelected.visible()
+        adapter.notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun exitSelectAll() {
+        if (!selectAllMode) return
+        selectAllMode = false
+        selectedIds.clear()
+        sysTtsViews.forEach {
+            it.isChecked = GSON.fromJsonObject<SelectItem<String>>(ttsEngine)
+                .getOrNull()?.value == it.tag
+        }
+        binding.tvFooterDeleteSelected.gone()
+        adapter.notifyDataSetChanged()
+    }
+
+    private fun toggleSelection(holder: ItemViewHolder, item: HttpTTS) {
+        if (!selectedIds.remove(item.id)) {
+            selectedIds.add(item.id)
+        }
+        if (selectedIds.isEmpty()) {
+            exitSelectAll()
+        } else {
+            adapter.notifyItemChanged(holder.layoutPosition)
+        }
+    }
+
+    private fun deleteSelected() {
+        val ids = selectedIds.toList()
+        if (ids.isEmpty()) {
+            exitSelectAll()
+            return
+        }
+        alert(R.string.delete_selected) {
+            setMessage(getString(R.string.sure_del_selected, ids.size))
+            noButton()
+            yesButton {
+                execute {
+                    ids.forEach { id ->
+                        appDb.httpTTSDao.get(id)?.let { httpTTS ->
+                            httpTTS.clearSharedGlobalState()
+                            appDb.httpTTSDao.delete(httpTTS)
+                        }
+                    }
+                }
+                exitSelectAll()
+            }
+        }
+    }
+
     inner class Adapter(context: Context) :
         RecyclerAdapter<HttpTTS, ItemHttpTtsBinding>(context) {
 
@@ -302,8 +380,12 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
         ) {
             binding.apply {
                 cbName.text = item.name
-                val isChecked = item.id.toString() == ttsEngine
-                if (isChecked) {
+                val isChecked = if (selectAllMode) {
+                    selectedIds.contains(item.id)
+                } else {
+                    item.id.toString() == ttsEngine
+                }
+                if (isChecked && !selectAllMode) {
                     currentSelect = holder.layoutPosition - getHeaderCount()
                 }
                 cbName.isChecked = isChecked
@@ -314,6 +396,10 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
             binding.run {
                 cbName.setOnClickListener {
                     getItemByLayoutPosition(holder.layoutPosition)?.let { httpTTS ->
+                        if (selectAllMode) {
+                            toggleSelection(holder, httpTTS)
+                            return@let
+                        }
                         val id = httpTTS.id.toString()
                         upTts(id)
                         if (httpTTS.shouldOpenLoginOnSelection()) {

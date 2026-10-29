@@ -37,6 +37,8 @@
     <string name="draw">Warning</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+    <string name="delete_selected">Delete selected</string>
+    <string name="sure_del_selected">Are you sure to delete the %d selected speech engines?</string>
     <string name="delete_select_group">Delete Select Group</string>
     <string name="delete_all">Delete all</string>
     <string name="custom_export_section">Custom export chapter of epub</string>
@@ -845,6 +847,7 @@
     <string name="chinese_converter">Simplified conversion</string>
     <string name="change_icon_error">The icon is a vector icon, which was not supported before Android 8.0</string>
     <string name="aloud_config">Speech settings</string>
+    <string name="read_aloud_setting_summary">Speech engine, speed and other speech options</string>
     <string name="main_activity">Start page</string>
     <string name="selectText">Long Tap to select text</string>
     <string name="long_press_select_paragraph">Select paragraph on long press</string>

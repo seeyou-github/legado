@@ -19,6 +19,8 @@ import io.legado.app.ui.about.AboutActivity
 import io.legado.app.ui.about.ReadRecordActivity
 import io.legado.app.ui.autoTask.AutoTaskActivity
 import io.legado.app.ui.book.bookmark.AllBookmarkActivity
+import io.legado.app.ui.config.ConfigActivity
+import io.legado.app.ui.config.ConfigTag
 import io.legado.app.ui.file.FileManageActivity
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.observeEventSticky
@@ -143,6 +145,9 @@ class MyOtherConfigFragment : PreferenceFragment(),
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         when (preference.key) {
+            "readAloudConfig" -> startActivity<ConfigActivity> {
+                putExtra("configTag", ConfigTag.READ_ALOUD_CONFIG)
+            }
             "autoTaskManage" -> startActivity<AutoTaskActivity>()
             "bookmark" -> startActivity<AllBookmarkActivity>()
             "readRecord" -> startActivity<ReadRecordActivity>()
