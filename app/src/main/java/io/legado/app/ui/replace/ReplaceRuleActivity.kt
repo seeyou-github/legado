@@ -297,7 +297,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         lifecycleScope.launch {
             appDb.replaceRuleDao.flowGroups().collect {
                 groups.clear()
-                groups.addAll(it)
+                groups.addAll(viewModel.applySavedGroupOrder(it))
                 upGroupMenu()
             }
         }

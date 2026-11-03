@@ -147,9 +147,7 @@ interface ReplaceRuleDao {
                 groups.add(group)
             }
         }
-        return groups.sortedWith { o1, o2 ->
-            o1.cnCompare(o2)
-        }
+        return groups.sortedWith { o1, o2 -> o1.cnCompare(o2) }
     }
 
     fun allGroups(): List<String> = dealGroups(allGroupsUnProcessed)

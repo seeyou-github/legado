@@ -2,9 +2,14 @@ package io.legado.app.ui.replace
 
 import android.app.Application
 import io.legado.app.base.BaseViewModel
+import io.legado.app.constant.PreferKey
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.help.config.ReplacePreviewConfig
+import io.legado.app.utils.GSON
+import io.legado.app.utils.cnCompare
+import io.legado.app.utils.defaultSharedPreferences
+import io.legado.app.utils.fromJsonArray
 import io.legado.app.utils.renameGroupExact
 
 /**
@@ -137,4 +142,27 @@ class ReplaceRuleViewModel(application: Application) : BaseViewModel(application
     }
 
     fun delGroup(group: String) = upGroup(group, null)
+
+    fun upGroupOrder(groups: List<String>) {
+        execute {
+            defaultSharedPreferences.edit()
+                .putString(PreferKey.replaceGroupOrder, GSON.toJson(groups))
+                .apply()
+        }
+    }
+
+    fun applySavedGroupOrder(groups: List<String>): List<String> {
+        val savedOrder = try {
+            defaultSharedPreferences.getString(PreferKey.replaceGroupOrder, null)
+                ?.let { GSON.fromJsonArray<String>(it).getOrDefault(emptyList()) }
+                ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+        if (savedOrder.isEmpty()) return groups
+        val ordered = savedOrder.filter { it in groups }
+        val remaining = groups.filter { it !in savedOrder }
+            .sortedWith { o1, o2 -> o1.cnCompare(o2) }
+        return ordered + remaining
+    }
 }
