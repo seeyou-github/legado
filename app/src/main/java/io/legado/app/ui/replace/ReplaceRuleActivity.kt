@@ -147,8 +147,15 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         groupMenu = menu.findItem(R.id.menu_group)?.subMenu
         menu.findItem(R.id.menu_manual_replace_rule)?.isChecked = AppConfig.manualReplaceRule
-        menu.findItem(R.id.menu_sort_by_name)?.isChecked = AppConfig.replaceRuleSort == 1
-        menu.findItem(R.id.menu_sort_by_time)?.isChecked = AppConfig.replaceRuleSort != 1
+        // 排序菜单是 checkableBehavior="single" 的互斥组，
+        // 这类 item 的 setChecked(false) 会走 setExclusiveItemChecked 反而把自己勾上，
+        // 所以只能给选中的那一项 setChecked(true)，由互斥组自动取消另一项。
+        val sortItemId = if (AppConfig.replaceRuleSort == 1) {
+            R.id.menu_sort_by_name
+        } else {
+            R.id.menu_sort_by_time
+        }
+        menu.findItem(sortItemId)?.isChecked = true
         upGroupMenu()
         return super.onPrepareOptionsMenu(menu)
     }
