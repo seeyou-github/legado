@@ -20,6 +20,7 @@ import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.databinding.ActivityReplaceEditBinding
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.dialogs.SelectItem
+import io.legado.app.lib.theme.view.ThemeRadioButton
 import io.legado.app.ui.code.CodeEditActivity
 import io.legado.app.ui.widget.keyboard.KeyboardToolPop
 import io.legado.app.ui.widget.popupActionMenu
@@ -200,16 +201,19 @@ class ReplaceEditActivity :
         binding.etName.doAfterTextChanged { schedulePreview() }
         selectedPattern = intent.getStringExtra("pattern")?.takeIf { it.isNotBlank() }
         binding.rbPresetLineStart.setOnClickListener {
+            upPresetRadioChecked(binding.rbPresetLineStart)
             selectedPattern?.let {
                 binding.etReplaceRule.setText("\\s$it.*")
             }
         }
         binding.rbPresetLineContains.setOnClickListener {
+            upPresetRadioChecked(binding.rbPresetLineContains)
             selectedPattern?.let {
                 binding.etReplaceRule.setText(".*$it.*")
             }
         }
         binding.rbPresetNone.setOnClickListener {
+            upPresetRadioChecked(binding.rbPresetNone)
             selectedPattern?.let {
                 binding.etReplaceRule.setText(it)
             }
@@ -250,6 +254,20 @@ class ReplaceEditActivity :
     private fun upPatternPresetVisibility() {
         binding.flexPatternPreset.isVisible =
             binding.cbUseRegex.isChecked && selectedPattern != null
+    }
+
+    /**
+     * 三个正则预设按钮放在 FlexboxLayout 里（为了自动换行），不是 RadioGroup，
+     * 系统不会做互斥，需要手动保证同一时间只有一个处于选中态。
+     */
+    private fun upPresetRadioChecked(checked: ThemeRadioButton) {
+        listOf(
+            binding.rbPresetLineStart,
+            binding.rbPresetLineContains,
+            binding.rbPresetNone
+        ).forEach {
+            it.isChecked = it === checked
+        }
     }
 
     /**

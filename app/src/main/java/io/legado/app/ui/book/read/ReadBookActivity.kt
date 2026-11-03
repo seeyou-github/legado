@@ -1313,6 +1313,8 @@ class ReadBookActivity : BaseReadBookActivity(),
                     ReplaceEditActivity.startIntent(
                         this,
                         pattern = text,
+                        // 从正文长按创建规则时默认限定到当前小说，编辑页会勾选「替换当前小说」
+                        scope = ReadBook.book?.name,
                         bookName = ReadBook.book?.name,
                         bookSource = ReadBook.bookSource?.bookSourceUrl
                     )

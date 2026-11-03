@@ -16,7 +16,9 @@ import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.databinding.ItemReplaceRuleBinding
 import io.legado.app.databinding.ItemReplaceRuleSectionBinding
 import io.legado.app.help.coroutine.Coroutine
+import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.ui.widget.popupActionMenu
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
@@ -349,6 +351,11 @@ class ReplaceRuleAdapter(
                 )
             )
             tvTitle.text = item.data.title
+            // 分组视图的分组名称跟随主题强调色；作用范围视图保持正文色
+            tvTitle.setTextColor(
+                if (viewMode == ViewMode.GROUP) context.accentColor
+                else context.primaryTextColor
+            )
             tvCount.text = context.getString(
                 R.string.replace_scope_rule_count,
                 item.data.rules.size
