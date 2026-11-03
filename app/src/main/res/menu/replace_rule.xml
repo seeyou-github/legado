@@ -61,6 +61,30 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_replace_rule_sort"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/sort"
+        app:showAsAction="never">
+
+        <menu>
+
+            <group android:checkableBehavior="single">
+
+                <item
+                    android:id="@+id/menu_sort_by_time"
+                    android:title="@string/sort_by_add_time" />
+
+                <item
+                    android:id="@+id/menu_sort_by_name"
+                    android:title="@string/sort_by_name" />
+
+            </group>
+
+        </menu>
+
+    </item>
+
+    <item
         android:id="@+id/menu_manual_replace_rule"
         android:checkable="true"
         android:icon="@drawable/ic_find_replace"

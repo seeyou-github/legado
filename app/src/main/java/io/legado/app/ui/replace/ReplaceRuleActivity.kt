@@ -44,6 +44,7 @@ import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.utils.ACache
 import io.legado.app.utils.GSON
 import io.legado.app.utils.applyTint
+import io.legado.app.utils.cnCompare
 import io.legado.app.utils.dpToPx
 import io.legado.app.utils.isAbsUrl
 import io.legado.app.utils.launch
@@ -81,6 +82,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     private var groupMenu: SubMenu? = null
     private var replaceRuleFlowJob: Job? = null
     private var dataInit = false
+    private var currentViewMode = ReplaceRuleAdapter.ViewMode.LIST
     private val itemTouchCallback by lazy {
         ItemTouchCallback(adapter).apply {
             isCanDrag = true
@@ -126,6 +128,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
+        adapter.sortByName = AppConfig.replaceRuleSort == 1
         initRecyclerView()
         initSearchView()
         initSelectActionView()
@@ -143,6 +146,8 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         groupMenu = menu.findItem(R.id.menu_group)?.subMenu
         menu.findItem(R.id.menu_manual_replace_rule)?.isChecked = AppConfig.manualReplaceRule
+        menu.findItem(R.id.menu_sort_by_name)?.isChecked = AppConfig.replaceRuleSort == 1
+        menu.findItem(R.id.menu_sort_by_time)?.isChecked = AppConfig.replaceRuleSort != 1
         upGroupMenu()
         return super.onPrepareOptionsMenu(menu)
     }
@@ -159,6 +164,8 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         dragSelectTouchHelper.activeSlideSelect()
 
         // Note: need judge selection first, so add ItemTouchHelper after it.
+        // 名称排序下顺序由名称决定，不允许拖拽
+        itemTouchCallback.isCanDrag = AppConfig.replaceRuleSort == 0
         ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
     }
 
@@ -199,7 +206,9 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                     2 -> ReplaceRuleAdapter.ViewMode.SCOPE
                     else -> ReplaceRuleAdapter.ViewMode.LIST
                 }
-                itemTouchCallback.isCanDrag = mode == ReplaceRuleAdapter.ViewMode.LIST
+                currentViewMode = mode
+                itemTouchCallback.isCanDrag = mode == ReplaceRuleAdapter.ViewMode.LIST &&
+                    AppConfig.replaceRuleSort == 0
                 adapter.setViewMode(mode)
             }
 
@@ -207,6 +216,21 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
             override fun onTabReselected(tab: TabLayout.Tab) = Unit
         })
+    }
+
+    /**
+     * 切换替换规则排序模式
+     * 0 = 添加时间排序（默认，按 sortOrder 手动顺序）
+     * 1 = 名称自然排序（此时不支持拖拽排序）
+     */
+    private fun setReplaceRuleSort(sort: Int) {
+        if (AppConfig.replaceRuleSort == sort) return
+        AppConfig.replaceRuleSort = sort
+        adapter.sortByName = sort == 1
+        invalidateOptionsMenu()
+        itemTouchCallback.isCanDrag = sort == 0 &&
+                currentViewMode == ReplaceRuleAdapter.ViewMode.LIST
+        observeReplaceRuleData(searchView.query?.toString())
     }
 
     private fun initSearchView() {
@@ -276,7 +300,12 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 if (dataInit) {
                     setResult(RESULT_OK)
                 }
-                adapter.setRules(it)
+                val sorted = if (adapter.sortByName) {
+                    it.sortedWith { a, b -> a.name.cnCompare(b.name) }
+                } else {
+                    it
+                }
+                adapter.setRules(sorted)
                 dataInit = true
                 delay(100)
             }
@@ -309,6 +338,8 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 editActivity.launch(ReplaceEditActivity.startIntent(this))
 
             R.id.menu_group_manage -> showDialogFragment<GroupManageDialog>()
+            R.id.menu_sort_by_time -> setReplaceRuleSort(0)
+            R.id.menu_sort_by_name -> setReplaceRuleSort(1)
             R.id.menu_manual_replace_rule -> {
                 AppConfig.manualReplaceRule = !AppConfig.manualReplaceRule
                 item.isChecked = AppConfig.manualReplaceRule

@@ -45,6 +45,11 @@ class ReplaceRuleAdapter(
 
     private var viewMode = ViewMode.LIST
     private var searchActive = false
+    /**
+     * 是否按名称自然排序。名称排序下顺序由名称决定，
+     * 拖拽排序与置顶/置底均不生效。
+     */
+    var sortByName = false
     private var rawRules: List<ReplaceRule> = emptyList()
     private var displayItems: List<DisplayItem> = emptyList()
     private val selected = linkedSetOf<ReplaceRule>()
@@ -440,8 +445,10 @@ class ReplaceRuleAdapter(
     private fun showMenu(view: View, position: Int) {
         val item = ruleAt(position) ?: return
         popupActionMenu(context) {
-            item(context.getString(R.string.to_top), "top")
-            item(context.getString(R.string.to_bottom), "bottom")
+            if (!sortByName) {
+                item(context.getString(R.string.to_top), "top")
+                item(context.getString(R.string.to_bottom), "bottom")
+            }
             item(context.getString(R.string.delete), "delete")
             danger("delete")
         }.show(view) { action ->
@@ -483,6 +490,7 @@ class ReplaceRuleAdapter(
 
     //ItemTouchCallback
     override fun swap(srcPosition: Int, targetPosition: Int): Boolean {
+        if (sortByName) return false
         val srcItem = ruleAt(srcPosition)
         val targetItem = ruleAt(targetPosition)
         if (srcItem != null && targetItem != null) {

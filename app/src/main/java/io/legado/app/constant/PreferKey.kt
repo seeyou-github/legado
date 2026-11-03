@@ -226,6 +226,7 @@ object PreferKey {
     const val autoBackup = "autoBackup"
     const val liveUpdateNotifications = "liveUpdateNotifications"
     const val replaceGroupOrder = "replaceGroupOrder"
+    const val replaceRuleSort = "replaceRuleSort"
 
     const val dThemeName = "durThemeName"
     const val dNThemeName = "durThemeNameNight"
