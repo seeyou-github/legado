@@ -252,12 +252,12 @@ class ReplaceEditActivity :
     }
 
     private fun upPatternPresetVisibility() {
-        binding.flexPatternPreset.isVisible =
+        binding.llPatternPreset.isVisible =
             binding.cbUseRegex.isChecked && selectedPattern != null
     }
 
     /**
-     * 三个正则预设按钮放在 FlexboxLayout 里（为了自动换行），不是 RadioGroup，
+     * 三个正则预设按钮是平铺在 LinearLayout 里三等分排列的，不在 RadioGroup 中，
      * 系统不会做互斥，需要手动保证同一时间只有一个处于选中态。
      */
     private fun upPresetRadioChecked(checked: ThemeRadioButton) {
