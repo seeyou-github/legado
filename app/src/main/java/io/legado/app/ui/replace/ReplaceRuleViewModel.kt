@@ -12,6 +12,9 @@ import io.legado.app.utils.fromJsonArray
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.putPrefString
 import io.legado.app.utils.renameGroupExact
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import splitties.init.appCtx
 
 /**
@@ -141,26 +144,55 @@ class ReplaceRuleViewModel(application: Application) : BaseViewModel(application
                 appDb.replaceRuleDao.update(*sources.toTypedArray())
             }
         }
+        // 重命名/删除分组时同步自定义排序，避免改个名字就掉到列表末尾
+        upSavedGroupOrderOnGroupChanged(oldGroup, newGroup)
     }
 
     fun delGroup(group: String) = upGroup(group, null)
 
+    private val _groupOrder = MutableStateFlow(readSavedGroupOrder())
+
+    /**
+     * 分组自定义排序。分组管理弹框里拖拽后更新，替换管理页面的分组 tab 与分组菜单跟随它刷新。
+     */
+    val groupOrder: StateFlow<List<String>> = _groupOrder.asStateFlow()
+
     fun upGroupOrder(groups: List<String>) {
+        _groupOrder.value = groups
         appCtx.putPrefString(PreferKey.replaceGroupOrder, GSON.toJson(groups))
     }
 
     fun applySavedGroupOrder(groups: List<String>): List<String> {
-        val savedOrder = try {
+        val savedOrder = _groupOrder.value
+        if (savedOrder.isEmpty()) return groups
+        val ordered = savedOrder.filter { it in groups }
+        val remaining = groups.filter { it !in savedOrder }
+            .sortedWith { o1, o2 -> o1.cnCompare(o2) }
+        return ordered + remaining
+    }
+
+    /**
+     * 分组重命名时把保存的排序里的旧名字替换成新名字，删除分组时移除该名字。
+     */
+    private fun upSavedGroupOrderOnGroupChanged(oldGroup: String, newGroup: String?) {
+        val savedOrder = _groupOrder.value
+        if (oldGroup !in savedOrder) return
+        val renamed = newGroup?.takeIf { it.isNotBlank() }
+        val newOrder = savedOrder.mapNotNull {
+            if (it == oldGroup) renamed else it
+        }
+        if (newOrder != savedOrder) {
+            upGroupOrder(newOrder)
+        }
+    }
+
+    private fun readSavedGroupOrder(): List<String> {
+        return try {
             appCtx.getPrefString(PreferKey.replaceGroupOrder)
                 ?.let { GSON.fromJsonArray<String>(it).getOrDefault(emptyList()) }
                 ?: emptyList()
         } catch (_: Exception) {
             emptyList()
         }
-        if (savedOrder.isEmpty()) return groups
-        val ordered = savedOrder.filter { it in groups }
-        val remaining = groups.filter { it !in savedOrder }
-            .sortedWith { o1, o2 -> o1.cnCompare(o2) }
-        return ordered + remaining
     }
 }

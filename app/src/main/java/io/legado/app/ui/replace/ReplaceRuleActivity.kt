@@ -136,6 +136,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         initFabScroll()
         observeReplaceRuleData()
         observeGroupData()
+        observeGroupOrder()
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
@@ -328,6 +329,24 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 groups.clear()
                 groups.addAll(viewModel.applySavedGroupOrder(it))
                 upGroupMenu()
+            }
+        }
+    }
+
+    /**
+     * 分组管理弹框里拖拽排序后 Room 的 flowGroups 不会重新发射，
+     * 这里订阅排序结果，立即刷新分组 tab 与分组菜单的顺序。
+     */
+    private fun observeGroupOrder() {
+        lifecycleScope.launch {
+            viewModel.groupOrder.collect { order ->
+                adapter.setGroupOrder(order)
+                if (groups.isNotEmpty()) {
+                    val reordered = viewModel.applySavedGroupOrder(groups)
+                    groups.clear()
+                    groups.addAll(reordered)
+                    upGroupMenu()
+                }
             }
         }
     }

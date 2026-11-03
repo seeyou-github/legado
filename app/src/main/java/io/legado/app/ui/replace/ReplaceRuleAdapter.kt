@@ -48,6 +48,11 @@ class ReplaceRuleAdapter(
     private var viewMode = ViewMode.LIST
     private var searchActive = false
     /**
+     * 分组自定义排序（来自分组管理弹框），决定分组 tab 里各分组的先后。
+     * 不在该列表里的分组（如新增分组）排在已排序分组之后，按原规则自然排序。
+     */
+    private var groupOrder: List<String> = emptyList()
+    /**
      * 是否按名称自然排序。名称排序下顺序由名称决定，
      * 拖拽排序与置顶/置底均不生效。
      */
@@ -71,6 +76,14 @@ class ReplaceRuleAdapter(
         if (viewMode == mode) return
         viewMode = mode
         submitDisplayItems()
+    }
+
+    fun setGroupOrder(order: List<String>) {
+        if (groupOrder == order) return
+        groupOrder = order
+        if (viewMode == ViewMode.GROUP) {
+            submitDisplayItems()
+        }
     }
 
     fun setSearchActive(active: Boolean) {
@@ -236,7 +249,13 @@ class ReplaceRuleAdapter(
                         groupItems.flatMap { it.rules }.distinctBy(ReplaceRule::id),
                     )
                 }
-                .sortedWith(compareBy({ it.rank }, { it.title }))
+                .sortedWith(
+                    // 未分组(rank 0)恒在最前，其余按分组管理弹框里保存的顺序，
+                    // 未保存过顺序的分组排在后面并按名称自然排序
+                    compareBy<SectionData> { it.rank }
+                        .thenBy { groupOrder.indexOf(it.title).let { i -> if (i >= 0) i else Int.MAX_VALUE } }
+                        .thenBy { it.title }
+                )
 
             else -> rawRules
                 .map { scopeSection(it, globalRulesTitle) to it }
