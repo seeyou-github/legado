@@ -8,9 +8,11 @@ import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.help.config.ReplacePreviewConfig
 import io.legado.app.utils.GSON
 import io.legado.app.utils.cnCompare
-import io.legado.app.utils.defaultSharedPreferences
 import io.legado.app.utils.fromJsonArray
+import io.legado.app.utils.getPrefString
+import io.legado.app.utils.putPrefString
 import io.legado.app.utils.renameGroupExact
+import splitties.init.appCtx
 
 /**
  * 替换规则数据修改
@@ -144,16 +146,12 @@ class ReplaceRuleViewModel(application: Application) : BaseViewModel(application
     fun delGroup(group: String) = upGroup(group, null)
 
     fun upGroupOrder(groups: List<String>) {
-        execute {
-            defaultSharedPreferences.edit()
-                .putString(PreferKey.replaceGroupOrder, GSON.toJson(groups))
-                .apply()
-        }
+        appCtx.putPrefString(PreferKey.replaceGroupOrder, GSON.toJson(groups))
     }
 
     fun applySavedGroupOrder(groups: List<String>): List<String> {
         val savedOrder = try {
-            defaultSharedPreferences.getString(PreferKey.replaceGroupOrder, null)
+            appCtx.getPrefString(PreferKey.replaceGroupOrder)
                 ?.let { GSON.fromJsonArray<String>(it).getOrDefault(emptyList()) }
                 ?: emptyList()
         } catch (_: Exception) {
